@@ -8,12 +8,14 @@
 #include <QUrl>
 #include <QUrlQuery>
 
+#include <algorithm>
+
 namespace {
 
 void clearIfEquals(auto &map, auto &&key, const auto &expectedID)
 {
     const auto it = map.find(std::forward<decltype(key)>(key));
-    if (it != map.end() && it->second->id.string == expectedID)
+    if (it != map.end() && it->second == expectedID)
     {
         map.erase(it);
     }
@@ -30,7 +32,11 @@ std::optional<EmotePtr> BadgeRegistry::getBadge(const UserId &id) const
     auto it = this->badgeMap_.find(id.string);
     if (it != this->badgeMap_.end())
     {
-        return it->second;
+        const auto badge = this->knownBadges_.find(it->second);
+        if (badge != this->knownBadges_.end())
+        {
+            return badge->second;
+        }
     }
     return std::nullopt;
 }
@@ -42,9 +48,34 @@ std::optional<EmotePtr> BadgeRegistry::getKickBadge(uint64_t id) const
     auto it = this->kickBadgeMap_.find(id);
     if (it != this->kickBadgeMap_.end())
     {
-        return it->second;
+        const auto badge = this->knownBadges_.find(it->second);
+        if (badge != this->knownBadges_.end())
+        {
+            return badge->second;
+        }
     }
     return std::nullopt;
+}
+
+std::optional<EmotePtr> BadgeRegistry::getBadgeByID(const QString &id) const
+{
+    std::shared_lock lock(this->mutex_);
+    const auto badge = this->knownBadges_.find(id);
+    if (badge != this->knownBadges_.end())
+    {
+        return badge->second;
+    }
+    return std::nullopt;
+}
+
+bool BadgeRegistry::isBadgeAssigned(const QString &id) const
+{
+    std::shared_lock lock(this->mutex_);
+    const auto matches = [&](const auto &entry) {
+        return entry.second == id;
+    };
+    return std::ranges::any_of(this->badgeMap_, matches) ||
+           std::ranges::any_of(this->kickBadgeMap_, matches);
 }
 
 void BadgeRegistry::assignBadgeToUser(const QString &badgeID,
@@ -52,11 +83,7 @@ void BadgeRegistry::assignBadgeToUser(const QString &badgeID,
 {
     const std::unique_lock lock(this->mutex_);
 
-    const auto badgeIt = this->knownBadges_.find(badgeID);
-    if (badgeIt != this->knownBadges_.end())
-    {
-        this->badgeMap_[userID.string] = badgeIt->second;
-    }
+    this->badgeMap_[userID.string] = badgeID;
 }
 
 void BadgeRegistry::assignBadgeToUsers(
@@ -64,19 +91,14 @@ void BadgeRegistry::assignBadgeToUsers(
 {
     const std::unique_lock lock(this->mutex_);
 
-    const auto badgeIt = this->knownBadges_.find(badgeID);
-    if (badgeIt == this->knownBadges_.end())
-    {
-        return;
-    }
     for (const auto &user : users)
     {
         std::visit(variant::Overloaded{
                        [&](const seventv::eventapi::TwitchUser &u) {
-                           this->badgeMap_[u.id] = badgeIt->second;
+                           this->badgeMap_[u.id] = badgeID;
                        },
                        [&](const seventv::eventapi::KickUser &u) {
-                           this->kickBadgeMap_[u.id] = badgeIt->second;
+                           this->kickBadgeMap_[u.id] = badgeID;
                        },
                    },
                    user);
@@ -110,13 +132,15 @@ void BadgeRegistry::clearBadgeFromUsers(
     }
 }
 
-QString BadgeRegistry::registerBadge(const QJsonObject &badgeJson)
+QString BadgeRegistry::registerBadge(const QJsonObject &badgeJson,
+                                     bool updateExisting)
 {
     const auto badgeID = this->idForBadge(badgeJson);
 
     const std::unique_lock lock(this->mutex_);
 
-    if (this->knownBadges_.contains(badgeID))
+    const auto known = this->knownBadges_.find(badgeID);
+    if (!updateExisting && known != this->knownBadges_.end())
     {
         return badgeID;
     }
@@ -127,6 +151,10 @@ QString BadgeRegistry::registerBadge(const QJsonObject &badgeJson)
         return badgeID;
     }
 
+    if (known != this->knownBadges_.end() && *known->second == *emote)
+    {
+        return badgeID;
+    }
     this->knownBadges_[badgeID] = std::move(emote);
     return badgeID;
 }

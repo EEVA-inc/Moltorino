@@ -81,6 +81,7 @@ Window::Window(WindowType type, QWidget *parent)
         if (this->theme->window.background.alpha() != 255)
         {
             this->setAttribute(Qt::WA_TranslucentBackground);
+            this->setAttribute(Qt::WA_NoSystemBackground, false);
         }
 #endif
     }

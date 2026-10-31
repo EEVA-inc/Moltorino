@@ -27,6 +27,7 @@ public:
     std::optional<EmotePtr> getBadge(const UserId &id) const;
 
     std::optional<EmotePtr> getKickBadge(uint64_t id) const;
+    std::optional<EmotePtr> getBadgeByID(const QString &id) const;
 
     void assignBadgeToUser(const QString &badgeID, const UserId &userID);
 
@@ -38,10 +39,12 @@ public:
     void clearBadgeFromUsers(const QString &badgeID,
                              std::span<const seventv::eventapi::User> users);
 
-    QString registerBadge(const QJsonObject &badgeJson);
+    QString registerBadge(const QJsonObject &badgeJson,
+                          bool updateExisting = true);
 
 protected:
     BadgeRegistry() = default;
+    bool isBadgeAssigned(const QString &id) const;
 
     virtual QString idForBadge(const QJsonObject &badgeJson) const = 0;
     virtual EmotePtr createBadge(const QString &id,
@@ -51,9 +54,9 @@ private:
 
     mutable std::shared_mutex mutex_;
 
-    std::unordered_map<QString, EmotePtr> badgeMap_;
+    std::unordered_map<QString, QString> badgeMap_;
 
-    std::unordered_map<uint64_t, EmotePtr> kickBadgeMap_;
+    std::unordered_map<uint64_t, QString> kickBadgeMap_;
 
     std::unordered_map<QString, EmotePtr> knownBadges_;
 };

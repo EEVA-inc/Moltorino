@@ -477,6 +477,16 @@ void SeventvPaints::enqueuePaintBatch(std::vector<PaintBatchItem> paints,
         {
             this->pendingPaintBatches_.push_front(std::move(request));
         }
+        else if (!this->pendingPaintBatches_.empty() &&
+                 this->pendingPaintBatches_.back().retry == retry &&
+                 this->pendingPaintBatches_.back().paints.size() +
+                         request.paints.size() <=
+                     (retry ? 10 : 50))
+        {
+            auto &queued = this->pendingPaintBatches_.back().paints;
+            queued.insert(queued.end(), request.paints.begin(),
+                          request.paints.end());
+        }
         else
         {
             this->pendingPaintBatches_.push_back(std::move(request));
@@ -576,9 +586,9 @@ void SeventvPaints::requestPaintBatch(PaintBatchRequest request)
                         failed.push_back(paint.paintID);
                     }
                 }
-                if (!sharedRequest->retry && !failed.isEmpty())
+                if (!failed.isEmpty())
                 {
-                    this->schedulePaintRetry(failed);
+                    this->schedulePaintRetry(failed, sharedRequest->retry);
                 }
                 this->finishPaintBatchRequest(sharedRequest->requestID);
                 return;
@@ -616,14 +626,14 @@ void SeventvPaints::requestPaintBatch(PaintBatchRequest request)
                 }
                 const bool applied = this->finishPaintLoad(
                     paint, sharedRequest->requestID, status);
-                if (applied && !ready && !sharedRequest->retry)
+                if (applied && !ready)
                 {
                     missing.push_back(paint.paintID);
                 }
             }
             if (!missing.isEmpty())
             {
-                this->schedulePaintRetry(missing);
+                this->schedulePaintRetry(missing, sharedRequest->retry);
             }
             this->finishPaintBatchRequest(sharedRequest->requestID,
                                           paintsChanged);
@@ -640,9 +650,9 @@ void SeventvPaints::requestPaintBatch(PaintBatchRequest request)
                     failed.push_back(paint.paintID);
                 }
             }
-            if (!sharedRequest->retry && !failed.isEmpty())
+            if (!failed.isEmpty())
             {
-                this->schedulePaintRetry(failed);
+                this->schedulePaintRetry(failed, sharedRequest->retry);
             }
             this->finishPaintBatchRequest(sharedRequest->requestID);
         })
@@ -731,9 +741,9 @@ void SeventvPaints::handlePaintRequestWatchdog(std::uint64_t requestID)
             },
             &this->lifetimeGuard_);
     }
-    if (!request.retry && !failed.isEmpty())
+    if (!failed.isEmpty())
     {
-        this->schedulePaintRetry(failed);
+        this->schedulePaintRetry(failed, request.retry);
     }
     postToThread(
         [this] {
@@ -742,15 +752,47 @@ void SeventvPaints::handlePaintRequestWatchdog(std::uint64_t requestID)
         &this->lifetimeGuard_);
 }
 
-void SeventvPaints::schedulePaintRetry(const QStringList &paintIDs)
+void SeventvPaints::schedulePaintRetry(const QStringList &paintIDs,
+                                       bool assignedOnly)
 {
     if (paintIDs.isEmpty())
     {
         return;
     }
-    QTimer::singleShot(900, &this->lifetimeGuard_, [this, paintIDs] {
-        this->loadPaintsByID(paintIDs, true);
-    });
+    QTimer::singleShot(
+        assignedOnly ? 30000 : 900, &this->lifetimeGuard_,
+        [this, paintIDs, assignedOnly] {
+            auto retry = paintIDs;
+            if (assignedOnly)
+            {
+                std::unique_lock lock(this->mutex_);
+                retry.removeIf([this](const QString &id) {
+                    const auto matches = [&](const auto &entry) {
+                        return entry.second == id;
+                    };
+                    if (this->knownPaints_.contains(id))
+                    {
+                        return true;
+                    }
+                    if (std::ranges::any_of(this->twitchPaintMap_, matches) ||
+                        std::ranges::any_of(this->kickPaintMap_, matches))
+                    {
+                        return false;
+                    }
+                    if (const auto state = this->paintLoadStates_.find(id);
+                        state != this->paintLoadStates_.end() &&
+                        (state->second.status ==
+                             SeventvPaintLoadStatus::Failed ||
+                         state->second.status ==
+                             SeventvPaintLoadStatus::NotFound))
+                    {
+                        this->paintLoadStates_.erase(state);
+                    }
+                    return true;
+                });
+            }
+            this->loadPaintsByID(retry, true);
+        });
 }
 
 bool SeventvPaints::finishPaintLoad(const PaintBatchItem &paint,
@@ -843,6 +885,12 @@ void SeventvPaints::assignPaintToUsers(
     }
 
     this->notifyPaintChanged(std::move(changedUsers));
+    if (!this->getPaintByID(normalizedPaintID))
+    {
+        QTimer::singleShot(0, &this->lifetimeGuard_, [this, normalizedPaintID] {
+            this->loadPaintByID(normalizedPaintID);
+        });
+    }
 }
 
 void SeventvPaints::clearPaintFromUsers(

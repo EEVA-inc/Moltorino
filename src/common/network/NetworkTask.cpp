@@ -71,22 +71,16 @@ void NetworkTask::run()
     const auto &timeout = this->data_->timeout;
     if (timeout.has_value())
     {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 3, 0)
-        QObject::connect(this->reply_, &QNetworkReply::requestSent, this,
-                         [this]() {
-                             const auto &timeout = this->data_->timeout;
-                             this->timer_ = new QTimer(this);
-                             this->timer_->setSingleShot(true);
-                             this->timer_->start(timeout.value());
-                             QObject::connect(this->timer_, &QTimer::timeout,
-                                              this, &NetworkTask::timeout);
-                         });
-#else
         this->timer_ = new QTimer(this);
         this->timer_->setSingleShot(true);
         this->timer_->start(timeout.value());
         QObject::connect(this->timer_, &QTimer::timeout, this,
                          &NetworkTask::timeout);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 3, 0)
+        QObject::connect(this->reply_, &QNetworkReply::requestSent, this,
+                         [this]() {
+                             this->timer_->start(*this->data_->timeout);
+                         });
 #endif
     }
 

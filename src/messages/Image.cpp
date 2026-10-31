@@ -1027,6 +1027,7 @@ void Image::retryLoad() const
     if (this->empty_)
     {
         auto *self = const_cast<Image *>(this);
+        self->loadGeneration_.fetch_add(1, std::memory_order_relaxed);
         self->empty_ = false;
         self->shouldLoad_ = true;
         self->animated_ = self->streamingGif_;
@@ -1366,9 +1367,9 @@ void Image::actuallyLoad(bool gifFallback)
     const auto loadGeneration =
         this->loadGeneration_.load(std::memory_order_relaxed);
     auto markEmpty = [loadGeneration](const std::shared_ptr<Image> &shared,
-                                      QString reason = {}) {
+                                      QString reason = {}, bool retry = false) {
         postToThread([weak = std::weak_ptr<Image>(shared), loadGeneration,
-                      reason = std::move(reason)]() mutable {
+                      reason = std::move(reason), retry]() mutable {
             auto shared = weak.lock();
             if (!shared)
             {
@@ -1388,10 +1389,34 @@ void Image::actuallyLoad(bool gifFallback)
             {
                 shared->failStreamingGif(shared->failureReason_,
                                          loadGeneration);
-                return;
+            }
+            else
+            {
+                detail::assignFrames(shared, {}, loadGeneration);
             }
 
-            detail::assignFrames(shared, {}, loadGeneration);
+            if (retry)
+            {
+                QTimer::singleShot(
+                    std::chrono::seconds(30), qApp,
+                    [weak, generation = shared->loadGeneration_.load(
+                               std::memory_order_relaxed)] {
+                        const auto image = weak.lock();
+                        if (!image || !image->empty_ ||
+                            image->loadGeneration_.load(
+                                std::memory_order_relaxed) != generation)
+                        {
+                            return;
+                        }
+                        image->loadGeneration_.fetch_add(
+                            1, std::memory_order_relaxed);
+                        image->empty_ = false;
+                        image->shouldLoad_ = true;
+                        image->retryCount_.store(0, std::memory_order_relaxed);
+                        image->failureReason_.clear();
+                        queueImageLayoutInvalidation();
+                    });
+            }
         });
     };
     auto onSuccess = [weak, markEmpty, loadGeneration, reservation,
@@ -1628,7 +1653,8 @@ void Image::actuallyLoad(bool gifFallback)
         }
 
         markEmpty(shared,
-                  QString("Network error (%1)").arg(result.formatError()));
+                  QString("Network error (%1)").arg(result.formatError()),
+                  shouldRetryImageLoad(result));
         return true;
     };
 
