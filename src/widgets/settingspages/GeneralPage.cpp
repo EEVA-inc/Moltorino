@@ -1287,6 +1287,16 @@ void GeneralPage::initLayout(GeneralPageView &layout)
         ->setTooltip("Badges from JilChat. Nothing is requested from JilChat "
                      "while this is off.")
         ->addTo(layout);
+    SettingWidget::checkbox("Bluzyrino", s.showBadgesBluzyrino)
+        ->setTooltip(
+            "Applies to everyone's badges on this device. Manage your "
+            "own badge visibility in Vanity.")
+        ->addTo(layout);
+    SettingWidget::checkbox("Wydios", s.showBadgesWydios)
+        ->addKeywords({"wydios", "wy"})
+        ->setTooltip("Badges from Wydios. Nothing is requested from Wydios "
+                     "while this is off.")
+        ->addTo(layout);
     SettingWidget::checkbox("Moltorino", s.showBadgesMoltorino)
         ->addKeywords({"moltorino", "supporter", "top donor", "developer"})
         ->setTooltip(

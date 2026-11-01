@@ -347,6 +347,10 @@ public:
     BoolSetting colorUsernames = {"/appearance/messages/colorUsernames", true};
     BoolSetting linkChannelNames = {"/appearance/messages/linkChannelNames",
                                     false};
+    BoolSetting blockDomainHighlights = {
+        "/client/blockDomainHighlights", false};
+    QStringSetting yourDomain = {
+        "/client/yourDomain", ""};
     BoolSetting findAllUsernames = {"/appearance/messages/findAllUsernames",
                                     false};
     // BoolSetting customizable splitheader
@@ -397,6 +401,7 @@ public:
     BoolSetting showBadgesFfzAp = {"/appearance/badges/ffzap", true};
     BoolSetting showBadgesBluzyrino = {"/appearance/badges/bluzyrino", true};
     BoolSetting showBadgesJilChat = {"/appearance/badges/jilchat", true};
+    BoolSetting showBadgesWydios = {"/appearance/badges/wydios", false}; // False because it's my self-project that not many users use
     BoolSetting showBadgesBadgeHQ = {"/appearance/badges/badgehq", true};
     BoolSetting useCustomFfzModeratorBadges = {
         "/appearance/badges/useCustomFfzModeratorBadges", true};

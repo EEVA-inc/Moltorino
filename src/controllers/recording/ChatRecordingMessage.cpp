@@ -261,6 +261,11 @@ QJsonObject normalizeMessage(const Channel &channel, const Message &message,
         {
             continue;
         }
+        if (element->getFlags().has(MessageElementFlag::BadgeWydios) &&
+            !getSettings()->showBadgesWydios)
+        {
+            continue;
+        }
         if (element->getFlags().has(MessageElementFlag::BadgeBadgeHQ) &&
             !getSettings()->showBadgesBadgeHQ)
         {

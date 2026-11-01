@@ -11,6 +11,7 @@ class HiddenUserController;
 class FfzApBadges;
 class BluzyrinoBadges;
 class JilChatBadges;
+class WydiosBadges;
 class BadgeHQBadges;
 class PotatCommands;
 class YouTubeChatServer;
@@ -102,6 +103,7 @@ public:
     virtual FfzApBadges *getFfzApBadges() = 0;
     virtual BluzyrinoBadges *getBluzyrinoBadges() = 0;
     virtual JilChatBadges *getJilChatBadges() = 0;
+    virtual WydiosBadges *getWydiosBadges() = 0;
     virtual BadgeHQBadges *getBadgeHQBadges() = 0;
     virtual PotatCommands *getPotatCommands() = 0;
     virtual YouTubeChatServer *getYouTubeChatServer() = 0;
@@ -216,6 +218,7 @@ private:
     std::unique_ptr<FfzApBadges> ffzApBadges;
     std::unique_ptr<BluzyrinoBadges> bluzyrinoBadges;
     std::unique_ptr<JilChatBadges> jilChatBadges;
+    std::unique_ptr<WydiosBadges> wydiosBadges;
     std::unique_ptr<BadgeHQBadges> badgeHQBadges;
     std::unique_ptr<PotatCommands> potatCommands;
     std::unique_ptr<BttvBadges> bttvBadges;
@@ -264,6 +267,7 @@ public:
     FfzApBadges *getFfzApBadges() override;
     BluzyrinoBadges *getBluzyrinoBadges() override;
     JilChatBadges *getJilChatBadges() override;
+    WydiosBadges *getWydiosBadges() override;
     BadgeHQBadges *getBadgeHQBadges() override;
     PotatCommands *getPotatCommands() override;
     YouTubeChatServer *getYouTubeChatServer() override;

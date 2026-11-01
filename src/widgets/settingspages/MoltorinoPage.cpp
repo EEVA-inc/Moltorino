@@ -2088,13 +2088,23 @@ MoltorinoPage::MoltorinoPage()
         ->setTooltip("Open Twitch channels in an existing tab or a new tab.")
         ->addTo(*view);
 
+    SettingWidget::checkbox("Block domain highlights",
+                        s.blockDomainHighlights)
+    ->setTooltip(
+        "Prevent your own domain from triggering username mention "
+        "highlights. Links remain clickable.")
+    ->addTo(*view);
+
+    SettingWidget::lineEdit("Your domain", s.yourDomain,
+                        "e.g. wydios.de")
+    ->setTooltip(
+        "Your domain, without https:// or a path. Subdomains are "
+        "included automatically.")
+    ->conditionallyEnabledBy(s.blockDomainHighlights)
+    ->addTo(*view);
+
     SettingWidget::checkbox("Correct ASCII art wrapping", s.wrapAsciiArt)
         ->setTooltip("Wrap ASCII art at Twitch web chat's width.")
-        ->addTo(*view);
-
-    SettingWidget::checkbox("Show Bluzyrino badges", s.showBadgesBluzyrino)
-        ->setTooltip("Applies to everyone's badges on this device. Manage your "
-                     "own badge visibility in Vanity.")
         ->addTo(*view);
 
     SettingWidget::checkbox("Send messages as Twitch Web",

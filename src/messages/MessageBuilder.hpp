@@ -285,6 +285,7 @@ private:
     void appendFfzApBadge(const QString &userID);
     void appendBluzyrinoBadges(const QString &userID);
     void appendJilChatBadges(const QString &userID);
+    void appendWydiosBadges(const QString &userID);
     void appendBadgeHQBadges(const QString &userID);
     void appendBttvBadges(const QString &userID);
     void appendSeventvBadges(const QString &userID);

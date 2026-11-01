@@ -110,7 +110,9 @@ enum class MessageElementFlag : int64_t {
 
     BadgeJilChat = (1LL << 44),
 
-    BadgeBadgeHQ = (1LL << 45),
+    BadgeWydios = (1LL << 45),
+
+    BadgeBadgeHQ = (1LL << 46),
 
     BadgeHomiesCustom = (1LL << 35),
     BadgeMoltorino = (1LL << 34),
@@ -119,7 +121,7 @@ enum class MessageElementFlag : int64_t {
              BadgeSubscription | BadgeVanity | BadgeChatterino | BadgeSevenTV |
              BadgeFfz | BadgeFfzAp | BadgeSharedChannel | BadgeBttv |
              BadgeHomiesSupporter | BadgeHomiesCustom | BadgeMoltorino |
-             BadgeBluzyrino | BadgeJilChat | BadgeBadgeHQ,
+             BadgeBluzyrino | BadgeJilChat | BadgeWydios | BadgeBadgeHQ,
 
     ChannelName = (1LL << 20),
 

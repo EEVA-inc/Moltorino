@@ -482,6 +482,9 @@ set(SOURCE_FILES
         providers/jilchat/JilChatBadges.cpp
         providers/jilchat/JilChatBadges.hpp
 
+        providers/wydios/WydiosBadges.cpp
+        providers/wydios/WydiosBadges.hpp
+
         providers/kick/KickAccount.cpp
         providers/kick/KickAccount.hpp
         providers/kick/KickAccountManager.cpp

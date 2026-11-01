@@ -8,6 +8,7 @@
 #include "providers/badgehq/BadgeHQBadges.hpp"
 #include "providers/bluzyrino/BluzyrinoBadges.hpp"
 #include "providers/jilchat/JilChatBadges.hpp"
+#include "providers/wydios/WydiosBadges.hpp"
 #include "providers/bttv/BttvBadges.hpp"
 #include "providers/chatterino/ChatterinoBadges.hpp"
 #include "providers/ffz/FfzBadges.hpp"
@@ -1892,6 +1893,13 @@ VanityDialog::VanityDialog(std::shared_ptr<TwitchChannel> channel,
                                                  });
     }
     if (auto *provider = getApp()->getJilChatBadges())
+    {
+        this->managedConnections_.managedConnect(provider->badgesUpdated,
+                                                 [this] {
+                                                     this->refreshPreview();
+                                                 });
+    }
+    if (auto *provider = getApp()->getWydiosBadges())
     {
         this->managedConnections_.managedConnect(provider->badgesUpdated,
                                                  [this] {
@@ -4879,6 +4887,14 @@ void VanityDialog::refreshPreview()
             addBadge(QStringLiteral("jc"), QStringLiteral("JilChat"), badge);
         }
     }
+    if (auto *provider = getApp()->getWydiosBadges();
+        provider != nullptr && getSettings()->showBadgesWydios)
+    {
+        for (const auto &badge : provider->getBadges({this->accountUserId_}))
+        {
+            addBadge(QStringLiteral("wy"), QStringLiteral("Wydios"), badge);
+        }
+    }
     if (auto *provider = getApp()->getBadgeHQBadges();
         provider != nullptr && getSettings()->showBadgesBadgeHQ)
     {
@@ -5858,6 +5874,10 @@ QString VanityDialog::layoutDisplayName(const QString &key) const
     if (key == QStringLiteral("jc"))
     {
         return QStringLiteral("JilChat");
+    }
+    if (key == QStringLiteral("wy"))
+    {
+        return QStringLiteral("Wydios");
     }
     if (key == QStringLiteral("bh"))
     {

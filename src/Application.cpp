@@ -24,6 +24,7 @@
 #include "providers/ffz/FfzEmotes.hpp"
 #include "providers/ffzap/FfzApBadges.hpp"
 #include "providers/jilchat/JilChatBadges.hpp"
+#include "providers/wydios/WydiosBadges.hpp"
 #include "providers/kick/KickChatServer.hpp"
 #include "providers/links/LinkResolver.hpp"
 #include "providers/IvrApi.hpp"
@@ -205,6 +206,7 @@ Application::Application(Settings &_settings, const Paths &paths,
     , ffzApBadges(new FfzApBadges)
     , bluzyrinoBadges(new BluzyrinoBadges)
     , jilChatBadges(new JilChatBadges)
+    , wydiosBadges(new WydiosBadges)
     , badgeHQBadges(new BadgeHQBadges)
     , potatCommands(new PotatCommands)
     , bttvBadges(new BttvBadges)
@@ -269,6 +271,7 @@ void Application::initialize(Settings &settings, const Modes &modes,
     this->ffzApBadges->initialize();
     this->bluzyrinoBadges->initialize();
     this->jilChatBadges->initialize();
+    this->wydiosBadges->initialize();
     this->badgeHQBadges->initialize();
     this->moltorinoSupporterBadges->initialize();
 
@@ -803,6 +806,12 @@ JilChatBadges *Application::getJilChatBadges()
     return this->jilChatBadges.get();
 }
 
+WydiosBadges *Application::getWydiosBadges()
+{
+    assert(this->wydiosBadges);
+    return this->wydiosBadges.get();
+}
+
 BadgeHQBadges *Application::getBadgeHQBadges()
 {
     assert(this->badgeHQBadges);
@@ -893,6 +902,7 @@ void Application::stop()
     this->ffzApBadges.reset();
     this->bluzyrinoBadges.reset();
     this->jilChatBadges.reset();
+    this->wydiosBadges.reset();
     this->badgeHQBadges.reset();
     this->potatCommands.reset();
     this->homiesBadges.reset();

@@ -132,13 +132,14 @@ void TwitchAccountManager::validateCurrentAccount(const QString &eventSubUserID)
             {
                 this->showAccountWarning(
                     u"Twitch could not reconnect some moderation updates for "
-                    "%1. Your login is valid."_s.arg(account->getUserName()));
+                    u"%1. Your login is valid."_s.arg(account->getUserName()));
             }
             else
             {
                 this->lastValidationWarning_.clear();
             }
         })
+        // Added the u prefixes to fix UTF-16 string literal compilation errors.
         .onError([this, account, isCurrent](const auto &res) {
             if (!tryGetApp() || !isCurrent())
             {
@@ -149,16 +150,16 @@ void TwitchAccountManager::validateCurrentAccount(const QString &eventSubUserID)
                 this->loginExpired.invoke();
                 this->showAccountWarning(
                     u"Your Twitch login for %1 is no longer valid. "
-                    "AutoMod and other account features may stop working. "
-                    "Add your account again to log in."_s.arg(
+                    u"AutoMod and other account features may stop working. "
+                    u"Add your account again to log in."_s.arg(
                         account->getUserName()));
             }
             else if (this->eventSubAuthFailed_)
             {
                 this->showAccountWarning(
                     u"Twitch denied access to some live updates for %1. "
-                    "Couldn't check your login. AutoMod and moderation "
-                    "updates may stop working."_s.arg(account->getUserName()));
+                    u"Couldn't check your login. AutoMod and moderation "
+                    u"updates may stop working."_s.arg(account->getUserName()));
             }
         })
         .finally([this, generation] {
