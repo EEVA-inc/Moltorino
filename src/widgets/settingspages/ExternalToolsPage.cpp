@@ -10,6 +10,7 @@
 #include "util/Clipboard.hpp"
 #include "util/Helpers.hpp"
 #include "util/ImageUploader.hpp"
+#include "util/UrlShortener.hpp"
 #include "util/StreamLink.hpp"
 #include "widgets/settingspages/SettingWidget.hpp"
 
@@ -43,6 +44,19 @@ void exportImageUploaderSettings(QWidget *parent)
     QMessageBox::information(
         parent, "Settings Exported",
         "Image uploader settings have been copied to clipboard as JSON.");
+}
+
+void exportUrlShortenerSettings(QWidget *parent)
+{
+    const auto &s = *getSettings();
+
+    QJsonObject settingsObj = urlshortener::detail::exportSettings(s);
+    QJsonDocument doc(settingsObj);
+    crossPlatformCopy(doc.toJson(QJsonDocument::Indented));
+
+    QMessageBox::information(
+        parent, "Settings Exported",
+        "URL shortener settings have been copied to clipboard as JSON.");
 }
 
 void importImageUploaderSettings(QWidget *parent)
@@ -82,6 +96,47 @@ void importImageUploaderSettings(QWidget *parent)
         QMessageBox::warning(
             parent, "Import Failed",
             "No valid image uploader settings found in the JSON.");
+    }
+}
+
+void importUrlShortenerSettings(QWidget *parent)
+{
+    QString clipboardText = getClipboardText().trimmed();
+
+    auto res = urlshortener::detail::validateImportJson(clipboardText);
+    if (!res)
+    {
+        QMessageBox::warning(
+            parent, "Import Failed",
+            QString("Error validating URL shortener import: %1.")
+                .arg(res.error()));
+        return;
+    }
+
+    const auto &settingsObj = *res;
+
+    int ret = QMessageBox::question(
+        parent, "Import Settings",
+        "This will overwrite your current URL shortener settings. Continue?",
+        QMessageBox::Yes | QMessageBox::No);
+
+    if (ret != QMessageBox::Yes)
+    {
+        return;
+    }
+
+    auto &s = *getSettings();
+    if (urlshortener::detail::importSettings(settingsObj, s))
+    {
+        QMessageBox::information(
+            parent, "Import Successful",
+            "URL shortener settings have been imported successfully!");
+    }
+    else
+    {
+        QMessageBox::warning(
+            parent, "Import Failed",
+            "No valid URL shortener settings found in the JSON.");
     }
 }
 
@@ -228,6 +283,74 @@ void ExternalToolsPage::initLayout(GeneralPageView &layout)
         QObject::connect(exportButton, &QPushButton::clicked, this, [this]() {
             exportImageUploaderSettings(this);
         });
+        buttonLayout->addWidget(exportButton);
+
+        buttonLayout->addStretch();
+        layout.addLayout(buttonLayout);
+    }
+
+    {
+        auto *form = new QFormLayout;
+        layout.addTitle("URL Shortener");
+
+        layout.addDescription(
+            "Works similarly to the Image Uploader. When you paste a URL "
+            "starting with https:// into the chat input (e.g. using Ctrl + V), "
+            "the URL Shortener is triggered and automatically shortens the URL.");
+
+        SettingWidget::checkbox("Enable URL shortener", s.urlShortenerEnabled)
+            ->addTo(layout);
+
+        SettingWidget::checkbox("Ask for confirmation when shortening a URL",
+                                s.askOnUrlShorten)
+            ->addTo(layout);
+
+        layout.addLayout(form);
+
+        SettingWidget::lineEdit(
+            "Request URL", s.urlShortenerUrl)
+            ->conditionallyEnabledBy(s.urlShortenerEnabled)
+            ->addTo(layout, form);
+
+        SettingWidget::lineEdit(
+            "Extra Headers", s.urlShortenerHeaders)
+            ->conditionallyEnabledBy(s.urlShortenerEnabled)
+            ->addTo(layout, form);
+
+        SettingWidget::lineEdit(
+            "Shortened link", s.urlShortenerLink)
+            ->conditionallyEnabledBy(s.urlShortenerEnabled)
+            ->addTo(layout, form);
+
+        SettingWidget::lineEdit(
+            "Deletion link", s.urlShortenerDeletionLink)
+            ->conditionallyEnabledBy(s.urlShortenerEnabled)
+            ->addTo(layout, form);
+
+        layout.addDescription(
+            "Export your current URL shortener settings as JSON to share with "
+            "others, or import settings from clipboard.");
+
+        auto *buttonLayout = new QHBoxLayout;
+
+        auto *importButton = new QPushButton("Import Settings from Clipboard");
+        importButton->setToolTip(
+            "Import URL shortener settings from clipboard JSON");
+
+        QObject::connect(importButton, &QPushButton::clicked, this, [this]() {
+            importUrlShortenerSettings(this);
+        });
+
+        buttonLayout->addWidget(importButton);
+
+        auto *exportButton = new QPushButton("Export Settings to Clipboard");
+        exportButton->setToolTip(
+            "Copy current URL shortener settings to clipboard as JSON");
+
+        QObject::connect(exportButton, &QPushButton::clicked, this, [this]() {
+            exportUrlShortenerSettings(this);
+        });
+
         buttonLayout->addWidget(exportButton);
 
         buttonLayout->addStretch();

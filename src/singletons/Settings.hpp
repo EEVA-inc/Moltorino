@@ -900,6 +900,16 @@ public:
     QStringSetting imageUploaderDeletionLink = {
         "/external/imageUploader/deletionLink", ""};
 
+    // Short Uploder
+    BoolSetting urlShortenerEnabled = {"/external/urlShortener/enabled", 
+                                        false};
+    QStringSetting urlShortenerUrl = {"/external/urlShortener/url", ""};
+    QStringSetting urlShortenerHeaders = {
+        "/external/urlShortener/headers", ""};
+    QStringSetting urlShortenerLink = {"/external/urlShortener/link", ""};
+    QStringSetting urlShortenerDeletionLink = {
+        "/external/urlShortener/deletionLink", ""};
+
     /// Misc
     BoolSetting betaUpdates = {"/misc/beta", false};
 #ifdef Q_OS_LINUX
@@ -946,6 +956,7 @@ public:
     BoolSetting attachExtensionToAnyProcess = {
         "/misc/attachExtensionToAnyProcess", false};
     BoolSetting askOnImageUpload = {"/misc/askOnImageUpload", true};
+    BoolSetting askOnUrlShorten = {"/misc/askOnUrlShorten", true};
     BoolSetting informOnTabVisibilityToggle = {"/misc/askOnTabVisibilityToggle",
                                                true};
     BoolSetting lockNotebookLayout = {"/misc/lockNotebookLayout", false};

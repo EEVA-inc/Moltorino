@@ -923,6 +923,7 @@ QString categoryForSettingPath(const QString &path)
             lower == QStringLiteral("/misc/chatsendprotocol") ||
             lower == QStringLiteral("/misc/openlinksincognito") ||
             lower == QStringLiteral("/misc/askonimageupload") ||
+            lower == QStringLiteral("/misc/askonurlshorten") ||
             lower == QStringLiteral("/misc/showpronouns") ||
             lower == QStringLiteral("/misc/showpronounsinchat") ||
             lower == QStringLiteral("/misc/hideemojibutton"))

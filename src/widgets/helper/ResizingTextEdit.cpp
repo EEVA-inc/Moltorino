@@ -17,6 +17,7 @@
 #include <QMimeDatabase>
 #include <QObject>
 #include <QPainter>
+#include <QRegularExpression>
 #include <QTextDocument>
 #include <QtMath>
 
@@ -539,6 +540,30 @@ void ResizingTextEdit::insertFromMimeData(const QMimeData *source)
                 return;
             }
         }
+    }
+
+    QString pastedText = source->text().trimmed();
+
+    static const QRegularExpression urlRegex(
+        R"(https?://[^\s]+)");
+
+    auto match = urlRegex.match(pastedText);
+
+    if (getSettings()->urlShortenerEnabled &&
+        match.hasMatch() &&
+        match.captured(0) == pastedText)
+    {
+        QTextCursor cursor = this->textCursor();
+        cursor.insertText(pastedText);
+
+        const int endPosition = cursor.position();
+        cursor.setPosition(endPosition - pastedText.size());
+        cursor.setPosition(endPosition, QTextCursor::KeepAnchor);
+
+        cursor.setKeepPositionOnInsert(true);
+
+        this->urlPasted.invoke(pastedText, cursor);
+        return;
     }
 
     insertPlainText(source->text());

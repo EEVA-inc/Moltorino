@@ -348,9 +348,20 @@ Split::Split(QWidget *parent)
                          this->runDeferredTwitchRefresh();
                      });
 
+    auto updateAcceptDrops = [this]() {
+        this->setAcceptDrops(
+            getSettings()->imageUploaderEnabled ||
+            getSettings()->urlShortenerEnabled);
+    };
+
     getSettings()->imageUploaderEnabled.connect(
         [this](const bool &val) {
             this->setAcceptDrops(val);
+        },
+        this->signalHolder_);
+    getSettings()->urlShortenerEnabled.connect(
+        [updateAcceptDrops](const bool &) {
+            updateAcceptDrops();
         },
         this->signalHolder_);
     this->signalHolder_.managedConnect(getApp()->getHotkeys()->onItemsUpdated,
@@ -3252,8 +3263,10 @@ void Split::reconnect()
 
 void Split::dragEnterEvent(QDragEnterEvent *event)
 {
-    if (getSettings()->imageUploaderEnabled &&
-        (event->mimeData()->hasImage() || event->mimeData()->hasUrls()))
+    if ((getSettings()->imageUploaderEnabled &&
+         (event->mimeData()->hasImage() || event->mimeData()->hasUrls())) ||
+        (getSettings()->urlShortenerEnabled &&
+         event->mimeData()->hasText()))
     {
         event->acceptProposedAction();
     }
@@ -3270,6 +3283,11 @@ void Split::dropEvent(QDropEvent *event)
     {
         this->ensureInput()->ui_.textEdit->imagePasted.invoke(
             event->mimeData());
+    }
+    else if (getSettings()->urlShortenerEnabled &&
+        event->mimeData()->hasText())
+    {
+        // 
     }
     else
     {

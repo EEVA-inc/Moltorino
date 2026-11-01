@@ -32,6 +32,7 @@ public:
     pajlada::Signals::NoArgSignal focused;
     pajlada::Signals::NoArgSignal focusLost;
     pajlada::Signals::Signal<const QMimeData *> imagePasted;
+    pajlada::Signals::Signal<const QString &, QTextCursor> urlPasted;
     pajlada::Signals::Signal<QMenu *, QPoint> contextMenuRequested;
     pajlada::Signals::Signal<TabCompletionModel *, int> tabCompletionChanged;
     pajlada::Signals::NoArgSignal tabCompletionHidden;

@@ -59,6 +59,8 @@ struct LiveUpdatesUpdateEmoteSetMessageTag {
 };
 struct ImageUploaderResultTag {
 };
+struct UrlShortenerResultTag {
+};
 
 const SystemMessageTag systemMessage{};
 const TimeoutMessageTag timeoutMessage{};
@@ -68,6 +70,7 @@ const LiveUpdatesAddEmoteMessageTag liveUpdatesAddEmoteMessage{};
 const LiveUpdatesUpdateEmoteSetMessageTag liveUpdatesUpdateEmoteSetMessage{};
 
 const ImageUploaderResultTag imageUploaderResultMessage{};
+const UrlShortenerResultTag urlShortenerResultMessage{};
 
 MessagePtr makeSystemMessage(const QString &text);
 MessagePtr makeSystemMessage(const QString &text, const QTime &time);
@@ -120,6 +123,9 @@ public:
     MessageBuilder(ImageUploaderResultTag, const QString &imageLink,
                    const QString &deletionLink, size_t imagesStillQueued = 0,
                    size_t secondsLeft = 0);
+
+    MessageBuilder(UrlShortenerResultTag, const QString &shortUrl,
+                   const QString &deletionLink);
 
     MessageBuilder(const MessageBuilder &) = delete;
     MessageBuilder(MessageBuilder &&) = delete;

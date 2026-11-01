@@ -1270,6 +1270,42 @@ MessageBuilder::MessageBuilder(ImageUploaderResultTag /*unused*/,
                 .arg(secondsLeft));
 }
 
+MessageBuilder::MessageBuilder(UrlShortenerResultTag /*unused*/,
+                               const QString &shortUrl,
+                               const QString &deletionLink)
+    : MessageBuilder()
+{
+    this->message().flags.set(MessageFlag::System);
+    this->message().flags.set(MessageFlag::DoNotTriggerNotification);
+
+    this->emplace<TimestampElement>();
+
+    using MEF = MessageElementFlag;
+    auto addText = [this](QString text,
+                          MessageColor color = MessageColor::System) {
+        this->message().searchText += text;
+        this->message().messageText += text;
+        return this->emplace<TextElement>(text, MEF::Text, color);
+    };
+
+    addText("Your URL has been shortened to");
+
+    addText(shortUrl, MessageColor::Link)
+        ->setLink({Link::Url, shortUrl})
+        ->setTrailingSpace(!deletionLink.isEmpty());
+
+    if (!deletionLink.isEmpty())
+    {
+        addText("(Deletion link:");
+        addText(deletionLink, MessageColor::Link)
+            ->setLink({Link::Url, deletionLink})
+            ->setTrailingSpace(false);
+        addText(")")->setTrailingSpace(false);
+    }
+
+    addText(".");
+}
+
 Message *MessageBuilder::operator->()
 {
     return this->message_.get();

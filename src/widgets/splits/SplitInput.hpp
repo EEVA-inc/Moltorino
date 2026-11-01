@@ -392,6 +392,7 @@ protected:
 
 private:
     void handleImagePaste(const QMimeData *source);
+    void handleUrlPaste(const QString &url, QTextCursor cursor);
 
 private Q_SLOTS:
     void editTextChanged();

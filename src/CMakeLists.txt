@@ -749,6 +749,8 @@ set(SOURCE_FILES
         singletons/Fonts.hpp
         singletons/ImageUploader.cpp
         singletons/ImageUploader.hpp
+        singletons/UrlShortener.cpp
+        singletons/UrlShortener.hpp
         singletons/Logging.cpp
         singletons/Logging.hpp
         singletons/NativeMessaging.cpp
@@ -820,6 +822,8 @@ set(SOURCE_FILES
         util/HttpServer.hpp
         util/ImageUploader.cpp
         util/ImageUploader.hpp
+        util/UrlShortener.cpp
+        util/UrlShortener.hpp
         util/IncognitoBrowser.cpp
         util/IncognitoBrowser.hpp
         util/IpcQueue.cpp
