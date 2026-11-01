@@ -1734,14 +1734,9 @@ void SplitInput::handleUrlPaste(const QString &url, QTextCursor cursor)
         {
             // Continue
         }
-        else if (clickedButton == cancel)
-        {
-            this->ui_.textEdit->insertPlainText(url);
-            return;
-        }
         else
         {
-            this->ui_.textEdit->insertPlainText(url);
+            // URL is already in the text input.
             return;
         }
     }
