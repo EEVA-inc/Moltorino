@@ -33,6 +33,7 @@
 #include "providers/youtube/YouTubeTypes.hpp"
 #include "singletons/Fonts.hpp"
 #include "singletons/ImageUploader.hpp"
+#include "singletons/UrlShortener.hpp"
 #include "singletons/Settings.hpp"
 #include "singletons/Theme.hpp"
 #include "singletons/ThemeCustomization.hpp"
@@ -1000,6 +1001,11 @@ SplitInput::SplitInput(QWidget *parent, Split *_chatWidget,
         [this](const QMimeData *source) {
             this->handleImagePaste(source);
         });
+    
+    std::ignore = this->ui_.textEdit->urlPasted.connect(
+        [this](const QString &url, QTextCursor cursor) {
+            this->handleUrlPaste(url, cursor);
+        });
 
     // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
     auto *spellChecker = getApp()->getSpellChecker();
@@ -1676,6 +1682,68 @@ void SplitInput::handleImagePaste(const QMimeData *source)
 
     QPointer<ResizingTextEdit> edit = this->ui_.textEdit;
     imageUploader->upload(std::move(images), channel, edit);
+}
+
+void SplitInput::handleUrlPaste(const QString &url, QTextCursor cursor)
+{
+    if (!getSettings()->urlShortenerEnabled)
+    {
+        return;
+    }
+
+    auto channel = this->replyChannel_.lock();
+    if (!channel)
+    {
+        channel = this->split_->getSelectedChannel();
+    }
+
+    if (!channel)
+    {
+        return;
+    }
+
+    if (getSettings()->askOnUrlShorten.getValue())
+    {
+        QMessageBox msgBox(this->window());
+        msgBox.setWindowTitle("Moltorino");
+        msgBox.setText("URL Shortener");
+        msgBox.setInformativeText(
+            QString("You are about to shorten this URL using a 3rd party service "
+                    "not in control of the Moltorino team.\n"
+                    "URL: %1\n"
+                    "The service may collect and store the URLs you submit. "
+                    "Are you okay with this?")
+                .arg(url.left(80) + (url.length() > 80 ? "..." : "")));
+        
+        auto *cancel = msgBox.addButton(QMessageBox::Cancel);
+        auto *yes = msgBox.addButton(QMessageBox::Yes);
+        auto *yesDontAskAgain =
+            msgBox.addButton("Yes, don't ask again", QMessageBox::YesRole);
+
+        msgBox.setDefaultButton(QMessageBox::Yes);
+
+        msgBox.exec();
+
+        auto *clickedButton = msgBox.clickedButton();
+
+        if (clickedButton == yesDontAskAgain)
+        {
+            getSettings()->askOnUrlShorten.setValue(false);
+        }
+        else if (clickedButton == yes)
+        {
+            // Continue
+        }
+        else
+        {
+            // URL is already in the text input.
+            return;
+        }
+    }
+
+    QPointer<ResizingTextEdit> edit = this->ui_.textEdit;
+
+    getApp()->getUrlShortener()->shorten(url, channel, edit, cursor);
 }
 
 void SplitInput::initLayout()

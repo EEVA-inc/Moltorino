@@ -1,0 +1,19 @@
+{
+    "input": {
+        "DeletionURL": "{json:deletion}",
+        "Headers": {
+            "Authorization": "Bearer TOKEN"
+        },
+        "Name": "Chatterino URL Shortener Settings",
+        "RequestMethod": "POST",
+        "RequestURL": "http://example.com",
+        "URL": "{json:shorturl}",
+        "Version": "1.0.0"
+    },
+    "output": {
+        "deletionLink": "{json:deletion}",
+        "headers": "Authorization: Bearer TOKEN",
+        "link": "{json:shorturl}",
+        "url": "http://example.com"
+    }
+}
