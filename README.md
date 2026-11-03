@@ -36,6 +36,13 @@ You can join the 7TV community using the link here: <https://discord.com/invite/
 
 When building Moltorino, you might not have access to a static build of `libavif`. In that case, you can define `CHATTERINO_NO_AVIF_PLUGIN` in CMake. If you have `qavif.so` from [kimageformats](https://invent.kde.org/frameworks/kimageformats) installed on your system, Chatterino will pick it up and use AVIF images.
 
+### Making Always-on-top work on Wayland
+
+Wayland doesn't support always-on-top for native windows, however some Wayland
+compositors do honor it for XWayland windows. The XWayland backend can be used
+by launching Moltorino with `QT_QPA_PLATFORM=xcb Moltorino7`, however it may break other
+things (like fractional scaling).
+
 ## Original Chatterino 2 Readme
 
 Chatterino 2 is a chat client for [Twitch.tv](https://twitch.tv).
