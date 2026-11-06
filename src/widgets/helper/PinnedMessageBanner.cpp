@@ -210,6 +210,7 @@ namespace {
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeBluzyrino);
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeJilChat);
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeWydios);
+        setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeSolrino);
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeBadgeHQ);
         setPinnedBadgeFlag(flags, wordFlags,
                            MessageElementFlag::BadgeHomiesSupporter);
