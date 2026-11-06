@@ -79,6 +79,11 @@ public:
         return nullptr;
     }
 
+    SolrinoBadges *getSolrinoBadges() override
+    {
+        return nullptr;
+    }
+
     WydiosBadges *getWydiosBadges() override
     {
         return nullptr;

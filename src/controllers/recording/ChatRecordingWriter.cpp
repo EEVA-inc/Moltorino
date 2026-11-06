@@ -186,6 +186,11 @@ bool trustedImage(const QUrl &url)
     {
         return true;
     }
+    if (host == "solrino.solrino-badge-server.workers.dev" &&
+        !url.hasFragment() && url.path().startsWith("/assets/badges/"))
+    {
+        return true;
+    }
     for (const auto &domain :
          {"jtvnw.net", "twitchcdn.net", "7tv.app", "7tv.io", "betterttv.net",
           "frankerfacez.com", "ffzap.com", "kick.com", "kickstatic.com",
