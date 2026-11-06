@@ -32,6 +32,7 @@
 #include "providers/homies/HomiesBadges.hpp"
 #include "providers/IvrApi.hpp"
 #include "providers/jilchat/JilChatBadges.hpp"
+#include "providers/solrino/SolrinoBadges.hpp"
 #include "providers/wydios/WydiosBadges.hpp"
 #include "providers/kick/KickAccount.hpp"
 #include "providers/kick/KickApi.hpp"
@@ -2703,6 +2704,12 @@ UserInfoPopup::UserInfoPopup(bool closeAutomatically, Split *split)
             [this] { this->refreshIdentityBadges(); });
     }
     if (auto *provider = getApp()->getWydiosBadges())
+    {
+        this->signalHolder_.managedConnect(
+            provider->badgesUpdated,
+            [this] { this->refreshIdentityBadges(); });
+    }
+    if (auto *provider = getApp()->getSolrinoBadges())
     {
         this->signalHolder_.managedConnect(
             provider->badgesUpdated,
@@ -6789,6 +6796,14 @@ void UserInfoPopup::refreshIdentityBadges()
                         {
                             appendBadge(badge,
                                         MessageElementFlag::BadgeWydios);
+                        }
+                    }
+                    if (auto *provider = getApp()->getSolrinoBadges())
+                    {
+                        for (const auto &badge : provider->getBadges({userID}))
+                        {
+                            appendBadge(badge,
+                                        MessageElementFlag::BadgeSolrino);
                         }
                     }
                     if (auto *provider = getApp()->getBadgeHQBadges())
