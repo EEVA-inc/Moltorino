@@ -355,8 +355,8 @@ Split::Split(QWidget *parent)
     };
 
     getSettings()->imageUploaderEnabled.connect(
-        [this](const bool &val) {
-            this->setAcceptDrops(val);
+        [updateAcceptDrops](const bool &) {
+            updateAcceptDrops();
         },
         this->signalHolder_);
     getSettings()->urlShortenerEnabled.connect(
@@ -3278,16 +3278,15 @@ void Split::dragEnterEvent(QDragEnterEvent *event)
 
 void Split::dropEvent(QDropEvent *event)
 {
-    if (getSettings()->imageUploaderEnabled &&
-        (event->mimeData()->hasImage() || event->mimeData()->hasUrls()))
+    if ((getSettings()->imageUploaderEnabled &&
+         (event->mimeData()->hasImage() || event->mimeData()->hasUrls())) ||
+        (getSettings()->urlShortenerEnabled &&
+         event->mimeData()->hasText()))
     {
-        this->ensureInput()->ui_.textEdit->imagePasted.invoke(
-            event->mimeData());
-    }
-    else if (getSettings()->urlShortenerEnabled &&
-        event->mimeData()->hasText())
-    {
-        // 
+        auto *edit = this->ensureInput()->ui_.textEdit;
+        event->acceptProposedAction();
+        edit->setFocus();
+        edit->insertFromMimeData(event->mimeData());
     }
     else
     {

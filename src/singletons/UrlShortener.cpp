@@ -56,8 +56,9 @@ QString getResponseValue(const NetworkResult &result, QString pattern)
 
         value = jsonValue.toString();
 
-        pattern.replace(match.captured(0), value);
-        match = regExp.match(pattern);
+        const auto next = match.capturedStart() + value.size();
+        pattern.replace(match.capturedStart(), match.capturedLength(), value);
+        match = regExp.match(pattern, next);
     }
 
     return pattern;
@@ -134,7 +135,13 @@ void UrlShortener::handleSuccessfulShorten(
         return;
     }
 
-    if (cursor.selectedText() != url)
+    const auto text = textEdit->toPlainText();
+    const auto start = cursor.selectionStart();
+    const auto end = cursor.selectionEnd();
+    if (cursor.document() != textEdit->document() ||
+        cursor.selectedText() != url ||
+        (start > 0 && !text.at(start - 1).isSpace()) ||
+        (end < text.size() && !text.at(end).isSpace()))
     {
         return;
     }

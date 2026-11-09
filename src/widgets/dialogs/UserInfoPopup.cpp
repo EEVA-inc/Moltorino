@@ -392,7 +392,10 @@ protected:
     // badges get cut off at the bottom.
     bool event(QEvent *event) override
     {
-        if (event->type() == QEvent::DevicePixelRatioChange ||
+        if (
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+            event->type() == QEvent::DevicePixelRatioChange ||
+#endif
             event->type() == QEvent::ScreenChangeInternal)
         {
             this->syncHeight();
@@ -6599,7 +6602,8 @@ void UserInfoPopup::refreshIdentityBadges()
         const auto appendBadge = [&badges, &wordFlags](
                                      const EmotePtr &emote,
                                      MessageElementFlag flag,
-                                     QString tooltip = {}) {
+                                     QString tooltip = {},
+                                     QColor background = {}) {
             const MessageElementFlags flags{flag};
             if (!emote || !wordFlags.hasAny(flags))
             {
@@ -6609,7 +6613,8 @@ void UserInfoPopup::refreshIdentityBadges()
             {
                 tooltip = emote->tooltip.string;
             }
-            badges.push_back({emote, std::move(tooltip), flags});
+            badges.push_back(
+                {emote, std::move(tooltip), flags, {}, std::move(background)});
         };
 
         if (!this->isYouTube_ && !this->isTikTok_ && !this->isKick_)
@@ -6747,19 +6752,22 @@ void UserInfoPopup::refreshIdentityBadges()
                     for (const auto &badge :
                          getApp()->getFfzBadges()->getUserBadges({userID}))
                     {
-                        appendBadge(badge.emote, MessageElementFlag::BadgeFfz);
+                        appendBadge(badge.emote, MessageElementFlag::BadgeFfz,
+                                    {}, badge.color);
                     }
                     for (const auto &badge :
                          twitchChannel->ffzChannelBadges(userID))
                     {
-                        appendBadge(badge.emote, MessageElementFlag::BadgeFfz);
+                        appendBadge(badge.emote, MessageElementFlag::BadgeFfz,
+                                    {}, badge.color);
                     }
                     if (auto *provider = getApp()->getFfzApBadges())
                     {
                         if (const auto badge = provider->getBadge({userID}))
                         {
                             appendBadge(badge->emote,
-                                        MessageElementFlag::BadgeFfzAp);
+                                        MessageElementFlag::BadgeFfzAp, {},
+                                        badge->color);
                         }
                     }
                     if (const auto badge =

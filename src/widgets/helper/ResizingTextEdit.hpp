@@ -20,6 +20,8 @@ public:
     ResizingTextEdit();
     ~ResizingTextEdit() override;
 
+    void insertFromMimeData(const QMimeData *source) override;
+
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
@@ -54,7 +56,6 @@ protected:
     void focusOutEvent(QFocusEvent *event) override;
 
     bool canInsertFromMimeData(const QMimeData *source) const override;
-    void insertFromMimeData(const QMimeData *source) override;
 
     void contextMenuEvent(QContextMenuEvent *event) override;
 
