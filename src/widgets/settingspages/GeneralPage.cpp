@@ -1297,6 +1297,11 @@ void GeneralPage::initLayout(GeneralPageView &layout)
         ->setTooltip("Badges from Wydios. Nothing is requested from Wydios "
                      "while this is off.")
         ->addTo(layout);
+    SettingWidget::checkbox("Solrino", s.showBadgesSolrino)
+        ->addKeywords({"solrino"})
+        ->setTooltip("Badges from Solrino. Nothing is requested from Solrino "
+                     "while this is off.")
+        ->addTo(layout);
     SettingWidget::checkbox("Moltorino", s.showBadgesMoltorino)
         ->addKeywords({"moltorino", "supporter", "top donor", "developer"})
         ->setTooltip(

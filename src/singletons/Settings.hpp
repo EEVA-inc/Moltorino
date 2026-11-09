@@ -403,6 +403,7 @@ public:
     BoolSetting showBadgesJilChat = {"/appearance/badges/jilchat", true};
     BoolSetting showBadgesWydios = {"/appearance/badges/wydios", false}; // False because it's my self-project that not many users use
     BoolSetting showBadgesBadgeHQ = {"/appearance/badges/badgehq", true};
+    BoolSetting showBadgesSolrino = {"/appearance/badges/solrino", true};
     BoolSetting useCustomFfzModeratorBadges = {
         "/appearance/badges/useCustomFfzModeratorBadges", true};
     BoolSetting useCustomFfzVipBadges = {
