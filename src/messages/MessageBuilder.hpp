@@ -293,6 +293,7 @@ private:
     void appendJilChatBadges(const QString &userID);
     void appendWydiosBadges(const QString &userID);
     void appendBadgeHQBadges(const QString &userID);
+    void appendBChatBadges(const QString &userID);
     void appendBttvBadges(const QString &userID);
     void appendSeventvBadges(const QString &userID);
     void appendHomiesBadges(const QString &userID, bool senderIsCurrentUser);

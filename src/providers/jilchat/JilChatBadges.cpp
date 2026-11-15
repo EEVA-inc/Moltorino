@@ -53,13 +53,15 @@ std::shared_ptr<const Emote> makeBadge(const QJsonObject &object)
         return nullptr;
     }
 
-    // JilChat serves one high-resolution image per badge. Autoscaling keeps
-    // all of its pixels and only sets the scale, so the badge is drawn at the
-    // regular badge size and stays sharp on HiDPI and in the tooltip.
     return std::make_shared<const Emote>(Emote{
         .name = EmoteName{QStringLiteral("jilchat:") +
                           (slug.isEmpty() ? id : slug)},
-        .images = ImageSet{Image::fromAutoscaledUrl(Url{imageUrl}, 18)},
+        // JilChat provides one 128x128 image per badge. We use explicit scaling with fromUrl because fromAutoscaledUrl failed to load the badge in the popup.
+        .images = ImageSet{
+            Image::fromUrl(Url{imageUrl}, 18.0 / 128.0, QSize(18, 18)),
+            Image::fromUrl(Url{imageUrl}, 36.0 / 128.0, QSize(36, 36)),
+            Image::fromUrl(Url{imageUrl}, 72.0 / 128.0, QSize(72, 72)),
+        },
         .tooltip = Tooltip{name.toHtmlEscaped()},
         .homePage = Url{},
         .id = EmoteId{id},

@@ -89,6 +89,11 @@ public:
         return nullptr;
     }
 
+    BChatBadges *getBChatBadges() override
+    {
+        return nullptr;
+    }
+
     PotatCommands *getPotatCommands() override
     {
         return nullptr;

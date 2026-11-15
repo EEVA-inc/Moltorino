@@ -24,6 +24,7 @@
 #include "messages/MessageElement.hpp"
 #include "messages/Link.hpp"
 #include "providers/badgehq/BadgeHQBadges.hpp"
+#include "providers/bchat/BChatBadges.hpp"
 #include "providers/bluzyrino/BluzyrinoBadges.hpp"
 #include "providers/bttv/BttvBadges.hpp"
 #include "providers/chatterino/ChatterinoBadges.hpp"
@@ -2712,6 +2713,12 @@ UserInfoPopup::UserInfoPopup(bool closeAutomatically, Split *split)
             [this] { this->refreshIdentityBadges(); });
     }
     if (auto *provider = getApp()->getBadgeHQBadges())
+    {
+        this->signalHolder_.managedConnect(
+            provider->badgesUpdated,
+            [this] { this->refreshIdentityBadges(); });
+    }
+    if (auto *provider = getApp()->getBChatBadges())
     {
         this->signalHolder_.managedConnect(
             provider->badgesUpdated,
@@ -6805,6 +6812,14 @@ void UserInfoPopup::refreshIdentityBadges()
                         {
                             appendBadge(badge,
                                         MessageElementFlag::BadgeBadgeHQ);
+                        }
+                    }
+                    if (auto *provider = getApp()->getBChatBadges())
+                    {
+                        for (const auto &badge : provider->getBadges({userID}))
+                        {
+                            appendBadge(badge, 
+                                        MessageElementFlag::BadgeBChat);
                         }
                     }
                     if (auto *provider =

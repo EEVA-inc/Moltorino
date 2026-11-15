@@ -6,6 +6,7 @@
 #include "controllers/accounts/AccountController.hpp"
 #include "messages/Image.hpp"
 #include "providers/badgehq/BadgeHQBadges.hpp"
+#include "providers/bchat/BChatBadges.hpp"
 #include "providers/bluzyrino/BluzyrinoBadges.hpp"
 #include "providers/jilchat/JilChatBadges.hpp"
 #include "providers/wydios/WydiosBadges.hpp"
@@ -1907,6 +1908,13 @@ VanityDialog::VanityDialog(std::shared_ptr<TwitchChannel> channel,
                                                  });
     }
     if (auto *provider = getApp()->getBadgeHQBadges())
+    {
+        this->managedConnections_.managedConnect(provider->badgesUpdated,
+                                                 [this] {
+                                                     this->refreshPreview();
+                                                 });
+    }
+    if (auto *provider = getApp()->getBChatBadges())
     {
         this->managedConnections_.managedConnect(provider->badgesUpdated,
                                                  [this] {
@@ -4903,6 +4911,14 @@ void VanityDialog::refreshPreview()
             addBadge(QStringLiteral("bh"), QStringLiteral("BadgeHQ"), badge);
         }
     }
+    if (auto *provider = getApp()->getBChatBadges();
+        provider != nullptr && getSettings()->showBadgesBChat)
+    {
+        for (const auto &badge : provider->getBadges({this->accountUserId_}))
+        {
+            addBadge(QStringLiteral("bc"), QStringLiteral("BChat"), badge);
+        }
+    }
     if (getApp()->getMoltorinoSupporterBadges() != nullptr)
     {
         const bool previewingLockedBadge =
@@ -5882,6 +5898,10 @@ QString VanityDialog::layoutDisplayName(const QString &key) const
     if (key == QStringLiteral("bh"))
     {
         return QStringLiteral("BadgeHQ");
+    }
+    if (key == QStringLiteral("bc"))
+    {
+        return QStringLiteral("BChat");
     }
     if (key == QStringLiteral("7"))
     {

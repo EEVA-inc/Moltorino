@@ -83,7 +83,7 @@ std::shared_ptr<const Emote> makeBadge(const QJsonObject &object)
             Image::fromUrl(Url{imageUrl36}, 0.5, QSize(36, 36)),
             Image::fromUrl(Url{imageUrl72}, 0.25, QSize(72, 72)),
         },
-        .tooltip = Tooltip{description.toHtmlEscaped()},
+        .tooltip = Tooltip{QStringLiteral("Wydios ") + name.toHtmlEscaped()},
         .homePage = Url{},
         .id = EmoteId{id},
     });
