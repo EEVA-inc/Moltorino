@@ -122,6 +122,8 @@ TEST(TwitchPubSubClient, ServerRespondsToPings)
 
     pubSub.listenToChannelPointRewards("123456");
 
+    ASSERT_TRUE(QTest::qWaitFor(
+        [&] { return pubSub.diag.listenResponses == 1; }, 1000));
     QTest::qWait(150);
 
     ASSERT_EQ(pubSub.wsDiag().connectionsOpened, 1);

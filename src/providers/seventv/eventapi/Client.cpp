@@ -391,6 +391,7 @@ void Client::onEntitlementCreate(
         case CosmeticKind::Badge: {
             badges->assignBadgeToUsers(entitlement.refID,
                                        entitlement.connections);
+            badges->loadBadgeByID(entitlement.refID);
         }
         break;
         case CosmeticKind::Paint: {

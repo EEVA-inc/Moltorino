@@ -877,6 +877,7 @@ private:
      * Or: Up until this moment we don't need to send activity.
      */
     QDateTime nextSeventvActivity_;
+    QString seventvActivityUserID_;
 
     QDateTime nextBttvActivity_;
 

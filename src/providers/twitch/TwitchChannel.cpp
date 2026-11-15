@@ -1178,18 +1178,12 @@ TwitchChannel::~TwitchChannel()
         return;
     }
 
-    getApp()->getTwitch()->dropSeventvChannel(this->seventvUserID_,
-                                              this->seventvEmoteSetID_);
+    getApp()->getTwitch()->dropSeventvChannel(
+        this->seventvUserID_, this->seventvEmoteSetID_, this->roomId());
 
     if (getApp()->getBttvLiveUpdates())
     {
         getApp()->getBttvLiveUpdates()->partChannel(this->roomId());
-    }
-
-    if (getApp()->getSeventvEventAPI())
-    {
-        getApp()->getSeventvEventAPI()->unsubscribeTwitchChannel(
-            this->roomId());
     }
 
     this->destroyed.invoke();
@@ -3589,7 +3583,8 @@ void TwitchChannel::updateSeventvUser(
         [weak = this->weakFromThis(), dispatch](auto &&emotes,
                                                 const auto &name) {
             postToThread([weak, dispatch, emotes, name]() {
-                if (auto shared = weak.lock())
+                if (auto shared = weak.lock();
+                    shared && shared->seventvEmoteSetID_ == dispatch.emoteSetID)
                 {
                     shared->seventvEmotes_.set(
                         std::make_shared<EmoteMap>(emotes));
@@ -3601,9 +3596,11 @@ void TwitchChannel::updateSeventvUser(
                 }
             });
         },
-        [weak = this->weakFromThis()](const auto &reason) {
-            postToThread([weak, reason]() {
-                if (auto shared = weak.lock())
+        [weak = this->weakFromThis(),
+         emoteSetID = dispatch.emoteSetID](const auto &reason) {
+            postToThread([weak, emoteSetID, reason]() {
+                if (auto shared = weak.lock();
+                    shared && shared->seventvEmoteSetID_ == emoteSetID)
                 {
                     shared->seventvEmotes_.set(EMPTY_EMOTE_MAP);
                     shared->addSystemMessage(
@@ -4649,9 +4646,15 @@ void TwitchChannel::updateSevenTVActivity()
     }
 
     if (!getSettings()->enableSevenTVEventAPI ||
-        !getSettings()->sendSevenTVActivity)
+        !getSettings()->sendSevenTVActivity || this->isReadingAnonymously())
     {
         return;
+    }
+
+    if (this->seventvActivityUserID_ != currentSeventvUserID)
+    {
+        this->seventvActivityUserID_ = currentSeventvUserID;
+        this->nextSeventvActivity_ = {};
     }
 
     if (this->nextSeventvActivity_.isValid() &&
@@ -4666,18 +4669,45 @@ void TwitchChannel::updateSevenTVActivity()
 
     getApp()->getSeventvAPI()->updatePresence(
         this->roomId(), currentSeventvUserID,
-        [chan = this->weakFromThis()]() {
+        [chan = this->weakFromThis(), currentSeventvUserID]() {
             const auto self = chan.lock();
-            if (!self)
+            if (!self || self->seventvActivityUserID_ != currentSeventvUserID)
             {
                 return;
             }
             self->nextSeventvActivity_ =
                 QDateTime::currentDateTimeUtc().addSecs(60);
         },
-        [](const auto &result) {
+        [chan = this->weakFromThis(),
+         currentSeventvUserID](const auto &result) {
             qCDebug(chatterinoSeventv)
                 << "Failed to update 7TV activity:" << result.formatError();
+            const auto self = chan.lock();
+            if (!self || self->seventvActivityUserID_ != currentSeventvUserID)
+            {
+                return;
+            }
+            self->nextSeventvActivity_ =
+                QDateTime::currentDateTimeUtc().addSecs(30);
+            const auto status = result.status();
+            if (status && *status < 500 && *status != 429)
+            {
+                return;
+            }
+            const auto retryAt = self->nextSeventvActivity_;
+            QTimer::singleShot(
+                std::chrono::seconds(30), Qt::PreciseTimer,
+                &self->lifetimeGuard_, [chan, currentSeventvUserID, retryAt] {
+                    if (const auto channel = chan.lock();
+                        channel && channel->nextSeventvActivity_ == retryAt &&
+                        getApp()->getAccounts()
+                                ->twitch.getCurrent()
+                                ->getSeventvUserID() == currentSeventvUserID)
+                    {
+                        channel->nextSeventvActivity_ = {};
+                        channel->updateSevenTVActivity();
+                    }
+                });
         });
 }
 

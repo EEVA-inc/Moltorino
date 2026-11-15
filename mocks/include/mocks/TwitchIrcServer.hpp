@@ -131,8 +131,8 @@ public:
         return Channel::getEmpty();
     }
 
-    void dropSeventvChannel(const QString &userID,
-                            const QString &emoteSetID) override
+    void dropSeventvChannel(const QString &userID, const QString &emoteSetID,
+                            const QString &roomID = {}) override
     {
         //
     }

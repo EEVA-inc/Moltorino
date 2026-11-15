@@ -27,7 +27,6 @@
 #include "providers/wydios/WydiosBadges.hpp"
 #include "providers/kick/KickChatServer.hpp"
 #include "providers/links/LinkResolver.hpp"
-#include "providers/IvrApi.hpp"
 #include "providers/potat/PotatCommands.hpp"
 #include "providers/pronouns/Pronouns.hpp"
 #include "providers/seventv/SeventvAPI.hpp"
@@ -262,7 +261,6 @@ void Application::initialize(Settings &settings, const Modes &modes,
         getSettings()->currentVersion.setValue(Version::instance().version());
     }
     this->emotes->initialize();
-    IvrApi::initialize();
 
     this->accounts->load();
     this->autoModReview->initialize();

@@ -1405,7 +1405,9 @@ std::shared_ptr<Channel> TwitchIrcServer::getCustomChannel(
 void TwitchIrcServer::forEachChannelAndSpecialChannels(
     std::function<void(ChannelPtr)> func)
 {
-    this->forEachChannel(func);
+    this->forEachTwitchChannel([&](TwitchChannel &channel) {
+        func(channel.shared_from_this());
+    });
 
     func(this->whispersChannel);
     func(this->mentionsChannel);
@@ -1705,10 +1707,14 @@ void TwitchIrcServer::initEventAPIs(BttvLiveUpdates *bttvLiveUpdates,
             });
         this->signalHolder.managedConnect(
             seventvEventAPI->signals_.userUpdated, [&](const auto &data) {
-                this->forEachSeventvUser(data.userID,
-                                         [data](TwitchChannel &chan) {
-                                             chan.updateSeventvUser(data);
-                                         });
+                postToThread(
+                    [this, data] {
+                        this->forEachSeventvUser(
+                            data.userID, [data](TwitchChannel &chan) {
+                                chan.updateSeventvUser(data);
+                            });
+                    },
+                    this);
             });
         this->signalHolder.managedConnect(
             seventvEventAPI->signals_.personalEmoteSetAdded,
@@ -1775,75 +1781,88 @@ void TwitchIrcServer::reloadAllFFZChannelEmotes()
 
 void TwitchIrcServer::reloadAllSevenTVChannelEmotes()
 {
-    this->forEachChannel([](const auto &chan) {
-        if (auto *channel = dynamic_cast<TwitchChannel *>(chan.get()))
-        {
-            channel->refreshSevenTVChannelEmotes(false);
-        }
+    this->forEachTwitchChannel([](TwitchChannel &channel) {
+        channel.refreshSevenTVChannelEmotes(false);
     });
+}
+
+void TwitchIrcServer::forEachTwitchChannel(
+    std::function<void(TwitchChannel &)> func)
+{
+    QVarLengthArray<ChannelPtr, 16> channels;
+    {
+        std::lock_guard lock(this->channelMutex);
+        for (const auto *map : {&this->channels, &this->anonymousChannels})
+        {
+            for (const auto &weak : *map)
+            {
+                if (auto channel = weak.lock())
+                {
+                    channels.push_back(std::move(channel));
+                }
+            }
+        }
+    }
+    for (const auto &channel : channels)
+    {
+        if (auto *twitch = dynamic_cast<TwitchChannel *>(channel.get()))
+        {
+            func(*twitch);
+        }
+    }
 }
 
 void TwitchIrcServer::forEachSeventvEmoteSet(
     const QString &emoteSetId, std::function<void(TwitchChannel &)> func)
 {
-    this->forEachChannel([emoteSetId, func](const auto &chan) {
-        if (auto *channel = dynamic_cast<TwitchChannel *>(chan.get());
-            channel->seventvEmoteSetID() == emoteSetId)
+    this->forEachTwitchChannel([&](TwitchChannel &channel) {
+        if (channel.seventvEmoteSetID() == emoteSetId)
         {
-            func(*channel);
+            func(channel);
         }
     });
 }
 void TwitchIrcServer::forEachSeventvUser(
     const QString &userId, std::function<void(TwitchChannel &)> func)
 {
-    this->forEachChannel([userId, func](const auto &chan) {
-        if (auto *channel = dynamic_cast<TwitchChannel *>(chan.get());
-            channel->seventvUserID() == userId)
+    this->forEachTwitchChannel([&](TwitchChannel &channel) {
+        if (channel.seventvUserID() == userId)
         {
-            func(*channel);
+            func(channel);
         }
     });
 }
 
 void TwitchIrcServer::dropSeventvChannel(const QString &userID,
-                                         const QString &emoteSetID)
+                                         const QString &emoteSetID,
+                                         const QString &roomID)
 {
     if (!getApp()->getSeventvEventAPI())
     {
         return;
     }
 
-    std::lock_guard<std::mutex> lock(this->channelMutex);
-
     bool skipUser = userID.isEmpty();
     bool skipSet = emoteSetID.isEmpty();
 
     bool foundUser = skipUser;
     bool foundSet = skipSet;
-    for (std::weak_ptr<Channel> &weak : this->channels)
-    {
-        ChannelPtr chan = weak.lock();
-        if (!chan)
-        {
-            continue;
-        }
-
-        auto *channel = dynamic_cast<TwitchChannel *>(chan.get());
-        if (!foundSet && channel->seventvEmoteSetID() == emoteSetID)
+    bool foundRoom = roomID.isEmpty();
+    this->forEachTwitchChannel([&](TwitchChannel &channel) {
+        if (!foundSet && channel.seventvEmoteSetID() == emoteSetID)
         {
             foundSet = true;
         }
-        if (!foundUser && channel->seventvUserID() == userID)
+        if (!foundUser && channel.seventvUserID() == userID)
         {
             foundUser = true;
         }
 
-        if (foundSet && foundUser)
+        if (!foundRoom && channel.roomId() == roomID)
         {
-            break;
+            foundRoom = true;
         }
-    }
+    });
 
     if (!foundUser)
     {
@@ -1852,6 +1871,10 @@ void TwitchIrcServer::dropSeventvChannel(const QString &userID,
     if (!foundSet)
     {
         getApp()->getSeventvEventAPI()->unsubscribeEmoteSet(emoteSetID);
+    }
+    if (!foundRoom)
+    {
+        getApp()->getSeventvEventAPI()->unsubscribeTwitchChannel(roomID);
     }
 }
 

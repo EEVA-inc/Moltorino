@@ -120,16 +120,6 @@ int main(int argc, char **argv)
         return 0;
     }
 
-#ifdef Q_OS_LINUX
-
-    const auto platformPreference = qgetenv("QT_QPA_PLATFORM");
-    if ((platformPreference.isEmpty() || platformPreference == "wayland;xcb") &&
-        !qEnvironmentVariableIsEmpty("DISPLAY"))
-    {
-        qputenv("QT_QPA_PLATFORM", "xcb;wayland");
-    }
-#endif
-
     QApplication a(argc, argv);
 
     QCoreApplication::setApplicationName("chatterino");

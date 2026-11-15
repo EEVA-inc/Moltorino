@@ -76,7 +76,8 @@ public:
         const QString &channelID) = 0;
 
     virtual void dropSeventvChannel(const QString &userID,
-                                    const QString &emoteSetID) = 0;
+                                    const QString &emoteSetID,
+                                    const QString &roomID = {}) = 0;
 
     virtual const IndirectChannel &getWatchingChannel() const = 0;
     virtual void setWatchingChannel(ChannelPtr newWatchingChannel) = 0;
@@ -130,8 +131,8 @@ public:
     void forEachSeventvUser(const QString &userId,
                             std::function<void(TwitchChannel &)> func);
 
-    void dropSeventvChannel(const QString &userID,
-                            const QString &emoteSetID) override;
+    void dropSeventvChannel(const QString &userID, const QString &emoteSetID,
+                            const QString &roomID = {}) override;
 
     void addFakeMessage(const QString &data) override;
 
@@ -159,6 +160,8 @@ public:
     void open(ConnectionType type);
 
 private:
+    void forEachTwitchChannel(std::function<void(TwitchChannel &)> func);
+
     Atomic<QString> lastUserThatWhisperedMe;
 
     const ChannelPtr whispersChannel;

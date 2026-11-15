@@ -98,7 +98,8 @@ private:
     void finishPaintBatchRequest(std::uint64_t requestID,
                                  bool paintsChanged = false);
     void handlePaintRequestWatchdog(std::uint64_t requestID);
-    void schedulePaintRetry(const QStringList &paintIDs);
+    void schedulePaintRetry(const QStringList &paintIDs,
+                            bool assignedOnly = false);
     bool finishPaintLoad(const PaintBatchItem &paint,
                          std::uint64_t requestID,
                          SeventvPaintLoadStatus status);
