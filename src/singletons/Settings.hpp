@@ -401,7 +401,7 @@ public:
     BoolSetting showBadgesFfzAp = {"/appearance/badges/ffzap", true};
     BoolSetting showBadgesBluzyrino = {"/appearance/badges/bluzyrino", true};
     BoolSetting showBadgesJilChat = {"/appearance/badges/jilchat", true};
-    BoolSetting showBadgesWydios = {"/appearance/badges/wydios", false}; // False because it's my self-project that not many users use
+    BoolSetting showBadgesWydios = {"/appearance/badges/wydios", true};
     BoolSetting showBadgesBadgeHQ = {"/appearance/badges/badgehq", true};
     BoolSetting showBadgesBChat = {"/appearance/badges/bchat", true};
     BoolSetting useCustomFfzModeratorBadges = {
