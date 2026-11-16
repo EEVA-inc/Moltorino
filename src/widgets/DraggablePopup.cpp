@@ -198,6 +198,7 @@ void DraggablePopup::applyPopupSize(QSize suggestedSize)
     auto minimum = this->defaultSize_.isValid()
                        ? this->defaultSize_ * this->scale()
                        : suggestedSize;
+    minimum.setHeight(std::min(minimum.height(), suggestedSize.height()));
     auto wanted = this->preferredSize(suggestedSize).expandedTo(minimum);
     if (auto *screen = this->screen())
     {

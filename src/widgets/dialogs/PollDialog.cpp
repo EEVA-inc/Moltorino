@@ -37,6 +37,7 @@
 #include <QScreen>
 #include <QSet>
 #include <QShowEvent>
+#include <QTextLayout>
 #include <QTimer>
 #include <QVariantAnimation>
 #include <QVBoxLayout>
@@ -97,6 +98,50 @@ bool pollIsOpenForVoting(const TwitchChannel::PollEvent &poll)
     return !poll.endsAt ||
            QDateTime::currentDateTimeUtc() < poll.endsAt.value();
 }
+
+class PollTitleLabel : public QLabel
+{
+public:
+    using QLabel::QLabel;
+
+    int heightForWidth(int width) const override
+    {
+        auto text = this->text();
+        text.replace(u'\n', QChar::LineSeparator);
+        QTextLayout layout(text, this->font());
+        QTextOption option(Qt::AlignHCenter);
+        option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+        layout.setTextOption(option);
+        layout.beginLayout();
+        qreal height = 0;
+        while (true)
+        {
+            auto line = layout.createLine();
+            if (!line.isValid())
+            {
+                break;
+            }
+            line.setLineWidth(std::max(1, width));
+            if (height > 0)
+            {
+                height += line.leading();
+            }
+            height += line.height();
+        }
+        layout.endLayout();
+        return int(std::ceil(height));
+    }
+
+protected:
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter painter(this);
+        painter.setPen(this->palette().color(this->foregroundRole()));
+        QTextOption option(Qt::AlignCenter);
+        option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+        painter.drawText(this->contentsRect(), this->text(), option);
+    }
+};
 
 class PollChoiceButton : public QPushButton
 {
@@ -405,6 +450,15 @@ PollDialog::PollDialog(TwitchChannel *channel, QWidget *parent)
                 this->updateUi();
             }
         }));
+    getSettings()->allowPopupResize.connect(
+        [this] {
+            QTimer::singleShot(0, this, [this] {
+                this->fitCreateOptionsList();
+                this->fitVoteOptionsList();
+                this->applySizeConstraints();
+            });
+        },
+        this->managedConnections_, false);
 
     this->refreshHeader();
     this->refreshStyle();
@@ -547,6 +601,7 @@ bool PollDialog::eventFilter(QObject *watched, QEvent *event)
         QTimer::singleShot(0, this, [this] {
             this->fitCreateOptionsList();
             this->fitVoteOptionsList();
+            this->applySizeConstraints();
         });
     }
 
@@ -1048,7 +1103,8 @@ void PollDialog::buildVoteUi()
                      uiMetrics.height() + std::max(6, int(7 * effectiveScale))));
     const int accentHeight =
         std::max(12, outcomeRowHeight - std::max(6, int(8 * effectiveScale)));
-    const int visibleRows = MAX_CHOICES;
+    const int visibleRows = std::clamp(static_cast<int>(poll.choices.size()),
+                                       MIN_CHOICES, MAX_CHOICES);
     const int listHeight =
         visibleRows * outcomeRowHeight +
         std::max(0, visibleRows - 1) * rowSpacing + sectionPad * 2;
@@ -1056,18 +1112,23 @@ void PollDialog::buildVoteUi()
     auto *questionCard = new QWidget(this->activeWidget_);
     this->voteQuestionCard_ = questionCard;
     questionCard->setObjectName("PollQuestionCard");
-    questionCard->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    questionCard->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     auto *questionLayout = new QVBoxLayout(questionCard);
     questionLayout->setContentsMargins(
         sectionPad * 2, std::max(2, int(5 * effectiveScale)), sectionPad * 2,
         std::max(1, int(3 * effectiveScale)));
     questionLayout->setSpacing(std::max(1, int(2 * effectiveScale)));
 
-    auto *titleLabel = new QLabel(poll.title, questionCard);
+    auto *titleLabel = new PollTitleLabel(poll.title, questionCard);
+    titleLabel->setTextFormat(Qt::PlainText);
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setWordWrap(true);
     titleLabel->setFont(titleFont);
     titleLabel->setObjectName("PollCurrentTitle");
+    titleLabel->setMinimumSize(1, 1);
+    auto titlePolicy = titleLabel->sizePolicy();
+    titlePolicy.setHorizontalPolicy(QSizePolicy::Ignored);
+    titleLabel->setSizePolicy(titlePolicy);
     questionLayout->addWidget(titleLabel);
 
     auto *timerLabel = new QLabel("Voting ended", questionCard);
@@ -1838,7 +1899,8 @@ void PollDialog::fitVoteOptionsList()
     const int available = contentHeight - reservedHeight;
     const int minimum =
         this->voteOutcomesPanel_->property("pollMinimumHeight").toInt();
-    const int fittedHeight = std::max(minimum, available);
+    const int fittedHeight =
+        std::max(minimum, this->hasCustomSize() ? available : wanted);
     this->voteOutcomesPanel_->setMinimumHeight(fittedHeight);
     this->voteOutcomesPanel_->setMaximumHeight(fittedHeight);
     this->outcomesScrollArea_->setMinimumHeight(0);
@@ -2099,7 +2161,7 @@ void PollDialog::applySizeConstraints()
             contentHeight += mainMargins.top() + mainMargins.bottom();
             contentWidth -= mainMargins.left() + mainMargins.right();
         }
-        contentWidth = std::max(1, contentWidth - 2);
+        contentWidth = std::max(1, contentWidth);
 
         if (this->headerWidget_ != nullptr)
         {
@@ -2119,11 +2181,30 @@ void PollDialog::applySizeConstraints()
             if (auto *layout = this->activeWidget_->layout();
                 layout != nullptr && layout->hasHeightForWidth())
             {
-                activeHeight = layout->totalHeightForWidth(contentWidth);
+                const int activeWidth = std::min(
+                    contentWidth, this->scrollArea_->viewport()->width());
+                activeHeight =
+                    layout->totalHeightForWidth(std::max(1, activeWidth));
             }
             if (activeHeight == 0)
             {
                 activeHeight = this->activeWidget_->sizeHint().height();
+            }
+            auto *panel = createMode ? this->createOutcomesPanel_
+                                     : this->voteOutcomesPanel_;
+            if (this->hasCustomSize() && panel != nullptr)
+            {
+                auto *layout = this->activeWidget_->layout();
+                const int index = layout->indexOf(panel);
+                if (index >= 0)
+                {
+                    const int minimum =
+                        createMode
+                            ? 24
+                            : panel->property("pollMinimumHeight").toInt();
+                    activeHeight +=
+                        minimum - layout->itemAt(index)->sizeHint().height();
+                }
             }
             contentHeight += activeHeight;
         }
