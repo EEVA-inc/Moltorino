@@ -638,6 +638,8 @@ public:
     };
     BoolSetting streamerModeHideUsercardAvatars = {
         "/streamerMode/hideUsercardAvatars", true};
+    BoolSetting streamerModeHideUsercardBanners = {
+        "/streamerMode/hideUsercardBanners", true};
     BoolSetting streamerModeHideLinkThumbnails = {
         "/streamerMode/hideLinkThumbnails", true};
     BoolSetting streamerModeHideViewerCountAndDuration = {

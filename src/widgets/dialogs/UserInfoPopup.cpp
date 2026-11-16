@@ -2006,11 +2006,15 @@ UserInfoPopup::UserInfoPopup(bool closeAutomatically, Split *split)
     auto layout = layers.emplace<QVBoxLayout>();
 
     // IVR profile banner
-    auto *ivrBanner = new UsercardBanner(this);
-    ivrBanner->hide();
+    if (!getApp()->getStreamerMode()->isEnabled() ||
+        !getSettings()->streamerModeHideUsercardBanners)
+    {
+        auto *ivrBanner = new UsercardBanner(this);
+        ivrBanner->hide();
 
-    this->ui_.ivrBanner = ivrBanner;
-    layout->addWidget(ivrBanner);
+        this->ui_.ivrBanner = ivrBanner;
+        layout->addWidget(ivrBanner);
+    }
 
     // first line
     auto head = layout.emplace<QHBoxLayout>().withoutMargin();
