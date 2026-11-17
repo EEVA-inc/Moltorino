@@ -13,6 +13,7 @@ class BluzyrinoBadges;
 class JilChatBadges;
 class WydiosBadges;
 class BadgeHQBadges;
+class BChatBadges;
 class PotatCommands;
 class YouTubeChatServer;
 class TikTokChatServer;
@@ -106,6 +107,7 @@ public:
     virtual JilChatBadges *getJilChatBadges() = 0;
     virtual WydiosBadges *getWydiosBadges() = 0;
     virtual BadgeHQBadges *getBadgeHQBadges() = 0;
+    virtual BChatBadges *getBChatBadges() = 0;
     virtual PotatCommands *getPotatCommands() = 0;
     virtual YouTubeChatServer *getYouTubeChatServer() = 0;
     virtual TikTokChatServer *getTikTokChatServer() = 0;
@@ -223,6 +225,7 @@ private:
     std::unique_ptr<JilChatBadges> jilChatBadges;
     std::unique_ptr<WydiosBadges> wydiosBadges;
     std::unique_ptr<BadgeHQBadges> badgeHQBadges;
+    std::unique_ptr<BChatBadges> bchatBadges;
     std::unique_ptr<PotatCommands> potatCommands;
     std::unique_ptr<BttvBadges> bttvBadges;
     std::unique_ptr<SeventvBadges> seventvBadges;
@@ -272,6 +275,7 @@ public:
     JilChatBadges *getJilChatBadges() override;
     WydiosBadges *getWydiosBadges() override;
     BadgeHQBadges *getBadgeHQBadges() override;
+    BChatBadges *getBChatBadges() override;
     PotatCommands *getPotatCommands() override;
     YouTubeChatServer *getYouTubeChatServer() override;
     TikTokChatServer *getTikTokChatServer() override;

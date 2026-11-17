@@ -441,6 +441,9 @@ set(SOURCE_FILES
         providers/badgehq/BadgeHQBadges.cpp
         providers/badgehq/BadgeHQBadges.hpp
 
+        providers/bchat/BChatBadges.cpp
+        providers/bchat/BChatBadges.hpp
+
         providers/bluzyrino/BluzyrinoBadges.cpp
         providers/bluzyrino/BluzyrinoBadges.hpp
         providers/bttv/BttvBadges.cpp

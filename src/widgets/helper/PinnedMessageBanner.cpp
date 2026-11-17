@@ -211,6 +211,7 @@ namespace {
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeJilChat);
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeWydios);
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeBadgeHQ);
+        setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeBChat);
         setPinnedBadgeFlag(flags, wordFlags,
                            MessageElementFlag::BadgeHomiesSupporter);
         setPinnedBadgeFlag(flags, wordFlags,

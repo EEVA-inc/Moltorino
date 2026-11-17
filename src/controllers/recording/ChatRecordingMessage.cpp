@@ -271,6 +271,11 @@ QJsonObject normalizeMessage(const Channel &channel, const Message &message,
         {
             continue;
         }
+        if (element->getFlags().has(MessageElementFlag::BadgeBChat) &&
+            !getSettings()->showBadgesBChat)
+        {
+            continue;
+        }
         if (const auto *badge =
                 dynamic_cast<const BadgeElement *>(element.get()))
         {
