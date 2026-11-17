@@ -299,7 +299,7 @@ TwitchIrcServer::TwitchIrcServer()
             if (timeout)
             {
 
-                this->addGlobalSystemMessage(
+                this->addGlobalConnectionNotice(
                     "Server connection timed out, reconnecting");
             }
             this->readConnection_->smartReconnect();
@@ -848,7 +848,7 @@ void TwitchIrcServer::handleReadMessage(Communi::IrcMessage *message,
             return;
         }
 
-        this->addGlobalSystemMessage(
+        this->addGlobalConnectionNotice(
             "Twitch Servers requested us to reconnect, reconnecting");
         this->markChannelsConnected();
         this->connect();
@@ -881,7 +881,7 @@ void TwitchIrcServer::writeConnectionMessageReceived(
     }
     else if (command == "RECONNECT")
     {
-        this->addGlobalSystemMessage(
+        this->addGlobalConnectionNotice(
             "Twitch Servers requested us to reconnect, reconnecting");
         this->connect();
     }
@@ -1934,6 +1934,16 @@ void TwitchIrcServer::addFakeMessage(const QString &data)
 void TwitchIrcServer::addGlobalSystemMessage(const QString &messageText)
 {
     MessageBuilder b(systemMessage, messageText);
+    auto message = b.release();
+    this->forEachChannel([&message](const auto &channel) {
+        channel->addMessage(message, MessageContext::Original);
+    });
+}
+
+void TwitchIrcServer::addGlobalConnectionNotice(const QString &messageText)
+{
+    MessageBuilder b(systemMessage, messageText);
+    b->flags.set(MessageFlag::ConnectionNotice);
     auto message = b.release();
     this->forEachChannel([&message](const auto &channel) {
         channel->addMessage(message, MessageContext::Original);

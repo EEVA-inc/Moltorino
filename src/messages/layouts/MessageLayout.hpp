@@ -99,6 +99,7 @@ private:
                     bool shouldInvalidateBuffer, bool retainContainer);
     void actuallyLayout(const MessageLayoutContext &ctx);
     void updateBuffer(QPixmap *buffer, const MessagePaintContext &ctx);
+    bool connectionMessageExpired(int delay) const;
 
     QPixmap *ensureBuffer(QPainter &painter, qreal width, bool clear);
 
@@ -122,6 +123,8 @@ private:
     bool centerBadges_ = false;
     bool autoModReviewExpanded_ = false;
     bool showHighlights_ = true;
+    bool connectionMessageHidden_ = false;
+    int connectionMessageHideDelay_ = -1;
     MessageElementFlags currentWordFlags_;
 
 #ifdef FOURTF

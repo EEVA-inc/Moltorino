@@ -191,6 +191,18 @@ bool MessageLayout::layoutImpl(const MessageLayoutContext &ctx,
     layoutRequired |= this->flags.has(MessageLayoutFlag::RequiresLayout);
     this->flags.unset(MessageLayoutFlag::RequiresLayout);
 
+    const int connectionMessageDelay =
+        getSettings()->hideConnectionMessagesAfter;
+    const bool hideConnectionMessage =
+        this->connectionMessageExpired(connectionMessageDelay);
+    this->connectionMessageHideDelay_ = connectionMessageDelay;
+    if (this->connectionMessageHidden_ != hideConnectionMessage)
+    {
+        this->connectionMessageHidden_ = hideConnectionMessage;
+        this->flags.set(MessageLayoutFlag::RequiresBufferUpdate);
+        layoutRequired = true;
+    }
+
     bool scaleChanged = this->scale_ != ctx.scale ||
                         this->imageScale_ != ctx.imageScale ||
                         this->emoteScale_ != ctx.emoteScale ||
@@ -305,6 +317,11 @@ void MessageLayout::actuallyLayout(const MessageLayoutContext &ctx)
             continue;
         }
 
+        if (this->connectionMessageHidden_)
+        {
+            continue;
+        }
+
         if (hideBlockedTermAutomodMessages &&
             this->message_->flags.has(MessageFlag::AutoModBlockedTerm))
         {
@@ -376,6 +393,24 @@ void MessageLayout::actuallyLayout(const MessageLayoutContext &ctx)
     {
         this->flags.set(MessageLayoutFlag::Collapsed);
     }
+}
+
+bool MessageLayout::connectionMessageExpired(int delay) const
+{
+    if (delay < 0 || !this->message_->isConnectionMessage())
+    {
+        return false;
+    }
+
+    // Stay hidden: the age wraps every 24 hours, so an old message would
+    // otherwise show up again a day later
+    if (this->connectionMessageHidden_ &&
+        this->connectionMessageHideDelay_ == delay)
+    {
+        return true;
+    }
+
+    return this->message_->msecsSinceParsed() >= delay * 1000LL;
 }
 
 MessagePaintResult MessageLayout::paint(const MessagePaintContext &ctx)

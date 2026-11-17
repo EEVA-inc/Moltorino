@@ -364,6 +364,34 @@ bool Message::usesTwitchGigantifyPresentation() const
            getSettings()->enableGigantifyEmotes;
 }
 
+bool Message::isConnectionMessage() const
+{
+    return this->flags.hasAny({
+        MessageFlag::ConnectedMessage,
+        MessageFlag::DisconnectedMessage,
+        MessageFlag::ConnectionNotice,
+    });
+}
+
+qint64 Message::msecsSinceParsed() const
+{
+    constexpr qint64 msecsPerHour = 60LL * 60 * 1000;
+    constexpr qint64 msecsPerDay = 24 * msecsPerHour;
+
+    const qint64 msecs = this->parseTime.msecsTo(QTime::currentTime());
+    if (msecs >= 0)
+    {
+        return msecs;
+    }
+    // A bit in the future: the clock went back (DST, time sync). Further back:
+    // the message is from before midnight.
+    if (msecs > -2 * msecsPerHour)
+    {
+        return 0;
+    }
+    return msecs + msecsPerDay;
+}
+
 Message::ClientDetectionStatus Message::classifyClientNonce(
     const QString &nonce)
 {

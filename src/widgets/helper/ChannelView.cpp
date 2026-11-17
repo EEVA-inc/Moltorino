@@ -111,6 +111,7 @@
 #include <chrono>
 #include <cmath>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <unordered_map>
 #include <utility>
@@ -1626,6 +1627,15 @@ ChannelView::ChannelView(InternalCtor /*tag*/, QWidget *parent, Split *split,
         this->scrollUpdateRequested();
     });
 
+    this->connectionMessageTimer_.setSingleShot(true);
+    // A coarse timer can fire 5% early (15s on a 5 minute delay)
+    this->connectionMessageTimer_.setTimerType(Qt::PreciseTimer);
+    QObject::connect(&this->connectionMessageTimer_, &QTimer::timeout, this,
+                     [this] {
+                         this->queueLayout();
+                         this->scheduleConnectionMessageHiding();
+                     });
+
     this->grabGesture(Qt::PanGesture);
 
     // TODO: Figure out if we need this, and if so, why
@@ -1909,6 +1919,12 @@ void ChannelView::initializeSignals()
     getSettings()->continuousSplitBackground.connect(
         [this] {
             this->update();
+        },
+        this->signalHolder_, false);
+
+    getSettings()->hideConnectionMessagesAfter.connect(
+        [this] {
+            this->scheduleConnectionMessageHiding();
         },
         this->signalHolder_, false);
 
@@ -3739,6 +3755,8 @@ void ChannelView::setChannel(const ChannelPtr &underlyingChannel,
             handleChan(underlyingChannel.get());
         }
     }
+
+    this->scheduleConnectionMessageHiding();
 }
 
 void ChannelView::setFilters(const QList<QUuid> &ids)
@@ -4655,6 +4673,13 @@ bool ChannelView::hasSourceChannel() const
 void ChannelView::messageAppended(MessagePtr &message,
                                   std::optional<MessageFlags> overridingFlags)
 {
+    // A newer message expires after the pending ones, so keep a running timer
+    if (message->isConnectionMessage() &&
+        !this->connectionMessageTimer_.isActive())
+    {
+        this->scheduleConnectionMessageHiding();
+    }
+
     auto *messageFlags = &message->flags;
     if (overridingFlags)
     {
@@ -5085,6 +5110,13 @@ void ChannelView::messageAddedAtStart(std::vector<MessagePtr> &messages)
 void ChannelView::messageReplaced(size_t hint, const MessagePtr &prev,
                                   const MessagePtr &replacement)
 {
+    // "disconnected" gets replaced with "reconnected"
+    if (replacement->isConnectionMessage() &&
+        !this->connectionMessageTimer_.isActive())
+    {
+        this->scheduleConnectionMessageHiding();
+    }
+
     if (!this->messageLayoutsMaterialized_)
     {
         if (this->virtualizedScrollAnchor_ == prev)
@@ -5159,6 +5191,39 @@ void ChannelView::messageReplaced(size_t hint, const MessagePtr &prev,
         this->highlightedMessage_ = newItem.get();
     }
     this->queueLayout();
+}
+
+void ChannelView::scheduleConnectionMessageHiding()
+{
+    this->connectionMessageTimer_.stop();
+
+    const int delay = getSettings()->hideConnectionMessagesAfter;
+    if (delay <= 0)
+    {
+        return;
+    }
+
+    const qint64 delayMsecs = delay * 1000LL;
+    std::optional<qint64> nextMsecs;
+    for (const auto &message : this->channel_->getMessageSnapshot())
+    {
+        if (!message->isConnectionMessage())
+        {
+            continue;
+        }
+        const qint64 remaining = delayMsecs - message->msecsSinceParsed();
+        if (remaining > 0 && (!nextMsecs || remaining < *nextMsecs))
+        {
+            nextMsecs = remaining;
+        }
+    }
+
+    if (nextMsecs)
+    {
+        // settings.json can be edited by hand
+        this->connectionMessageTimer_.start(static_cast<int>(
+            std::min<qint64>(*nextMsecs, std::numeric_limits<int>::max())));
+    }
 }
 
 void ChannelView::messagesUpdated()

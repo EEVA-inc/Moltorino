@@ -117,6 +117,10 @@ struct Message {
     bool isHiddenByClientNonce() const;
     bool usesTwitchGigantifyPresentation() const;
 
+    bool isConnectionMessage() const;
+    // parseTime has no date, so this wraps around at midnight
+    qint64 msecsSinceParsed() const;
+
     QString getHeaderText() const;
 
     std::shared_ptr<ChannelPointReward> reward = nullptr;

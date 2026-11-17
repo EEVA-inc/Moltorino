@@ -162,6 +162,8 @@ public:
 private:
     void forEachTwitchChannel(std::function<void(TwitchChannel &)> func);
 
+    void addGlobalConnectionNotice(const QString &messageText);
+
     Atomic<QString> lastUserThatWhisperedMe;
 
     const ChannelPtr whispersChannel;

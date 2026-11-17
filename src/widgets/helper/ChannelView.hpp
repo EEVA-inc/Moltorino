@@ -567,6 +567,9 @@ private:
     QPointF currentMousePosition_;
     QTimer scrollTimer_;
 
+    QTimer connectionMessageTimer_;
+    void scheduleConnectionMessageHiding();
+
     // We're only interested in the pointer, not the contents
     MessageLayout *highlightedMessage_ = nullptr;
     QVariantAnimation highlightAnimation_;
