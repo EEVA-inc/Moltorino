@@ -611,6 +611,9 @@ set(SOURCE_FILES
         providers/seventv/SeventvPersonalEmotes.cpp
         providers/seventv/SeventvPersonalEmotes.hpp
 
+        providers/solrino/SolrinoBadges.cpp
+        providers/solrino/SolrinoBadges.hpp
+
         providers/seventv/paints/Paint.hpp
         providers/seventv/paints/Paint.cpp
         providers/seventv/paints/PaintDropShadow.hpp
