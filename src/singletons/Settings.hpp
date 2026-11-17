@@ -261,6 +261,9 @@ public:
     BoolSetting fadeMessageHistory = {"/appearance/messages/fadeMessageHistory",
                                       true};
     BoolSetting hideModerated = {"/appearance/messages/hideModerated", false};
+    /// Seconds; -1 = never, 0 = right away
+    IntSetting hideConnectionMessagesAfter = {
+        "/appearance/messages/hideConnectionMessagesAfter", -1};
     BoolSetting extendedClientNonceParsing = {
         "/appearance/messages/extendedClientNonceParsing", false};
     BoolSetting hideModerationActions = {

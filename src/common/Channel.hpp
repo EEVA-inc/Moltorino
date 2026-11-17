@@ -118,7 +118,8 @@ public:
     void prependMessage(MessagePtr message);
     void addMessagesAtStart(const std::vector<MessagePtr> &messages_);
 
-    void addSystemMessage(const QString &contents);
+    void addSystemMessage(const QString &contents,
+                          MessageFlags extraFlags = {});
 
     /// Inserts the given messages in order by Message::serverReceivedTime.
     void fillInMissingMessages(const std::vector<MessagePtr> &messages);

@@ -85,6 +85,8 @@ enum class MessageFlag : std::int64_t {
     TwitchGif = (1LL << 49),
     AsciiArt = (1LL << 50),
     ExtendedClientNonce = (1LL << 51),
+    /// "joined channel", "Server connection timed out, reconnecting", etc.
+    ConnectionNotice = (1LL << 52),
 };
 using MessageFlags = FlagsEnum<MessageFlag>;
 

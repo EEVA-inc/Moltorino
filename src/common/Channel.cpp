@@ -175,9 +175,10 @@ void Channel::addMessage(MessagePtr message, MessageContext context,
     this->messageAppended.invoke(message, overridingFlags);
 }
 
-void Channel::addSystemMessage(const QString &contents)
+void Channel::addSystemMessage(const QString &contents, MessageFlags extraFlags)
 {
     MessageBuilder builder(systemMessage, contents);
+    builder->flags.set(extraFlags);
     if (this->isTikTokChannel())
     {
         builder->platform = MessagePlatform::TikTok;

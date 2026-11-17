@@ -269,6 +269,8 @@ WindowManager::WindowManager(const Args &appArgs_, const Paths &paths,
         settings.showBlockedTermAutomodMessages);
     this->forceLayoutChannelViewsListener.add(settings.hideModerated);
     this->forceLayoutChannelViewsListener.add(
+        settings.hideConnectionMessagesAfter);
+    this->forceLayoutChannelViewsListener.add(
         settings.extendedClientNonceParsing);
     this->forceLayoutChannelViewsListener.add(
         settings.streamerModeHideModActions);

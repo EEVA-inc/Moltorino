@@ -496,7 +496,8 @@ void YouTubeChannel::beginResolving()
         return;
     }
     this->initialResolutionNoticeShown_ = true;
-    this->addSystemMessage(u"connecting to YouTube"_s);
+    this->addSystemMessage(u"connecting to YouTube"_s,
+                           MessageFlag::ConnectionNotice);
 }
 
 void YouTubeChannel::applyResolved(const YouTubeResolvedChannel &resolved)
@@ -1180,14 +1181,17 @@ void YouTubeChannel::setConnectionState(bool connected, const QString &detail)
     {
         this->resolutionErrorShown_ = false;
         this->offlineNoticeShown_ = false;
-        this->addSystemMessage(this->everConnected_ ? u"reconnected to YouTube"_s
-                                                    : u"connected to YouTube"_s);
+        this->addSystemMessage(this->everConnected_
+                                   ? u"reconnected to YouTube"_s
+                                   : u"connected to YouTube"_s,
+                               MessageFlag::ConnectionNotice);
         this->everConnected_ = true;
     }
     else if (wasConnected)
     {
         (void)detail;
-        this->addSystemMessage(u"disconnected from YouTube, reconnecting"_s);
+        this->addSystemMessage(u"disconnected from YouTube, reconnecting"_s,
+                               MessageFlag::ConnectionNotice);
     }
 }
 

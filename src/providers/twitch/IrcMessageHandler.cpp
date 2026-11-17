@@ -1254,7 +1254,8 @@ void IrcMessageHandler::handleJoinMessage(Communi::IrcMessage *message)
             : getApp()->getAccounts()->twitch.getCurrent()->getUserName();
     if (message->nick().compare(ownNick, Qt::CaseInsensitive) == 0)
     {
-        twitchChannel->addSystemMessage("joined channel");
+        twitchChannel->addSystemMessage("joined channel",
+                                        MessageFlag::ConnectionNotice);
         twitchChannel->joined.invoke();
     }
     else if (getSettings()->showJoins.getValue())

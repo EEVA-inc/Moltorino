@@ -2079,6 +2079,40 @@ MoltorinoPage::MoltorinoPage()
         ->setToolTip("Choose when the inline Delete action appears beside "
                      "messages sent by the selected account.");
 
+    auto *hideConnectionMessages = view->addDropdown<int>(
+        "Hide connection messages",
+        {"Never", "Right away", "10s", "30s", "60s", "120s", "300s"},
+        s.hideConnectionMessagesAfter,
+        [](auto val) {
+            if (val < 0)
+            {
+                return QString("Never");
+            }
+            if (val == 0)
+            {
+                return QString("Right away");
+            }
+            return QString::number(val) + "s";
+        },
+        [](const auto &args) {
+            if (args.value == "Right away")
+            {
+                return 0;
+            }
+            // "Never", or anything typed without a number in it
+            return fuzzyToInt(args.value, -1);
+        },
+        true,
+        "Hides messages about the chat connection, like \"connected\", "
+        "\"disconnected\", \"joined channel\" and \"Server connection timed "
+        "out, reconnecting\", after this many seconds. You can also type your "
+        "own number of seconds.");
+    // An editable combo box draws its text field in the darker Base color,
+    // so it stood out next to the plain dropdowns above and below it
+    auto palette = hideConnectionMessages->palette();
+    palette.setColor(QPalette::Base, palette.color(QPalette::Button));
+    hideConnectionMessages->setPalette(palette);
+
     SettingWidget::checkbox("Continuous background across splits",
                             s.continuousSplitBackground)
         ->addKeywords({"wallpaper", "image", "video"})

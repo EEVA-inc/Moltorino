@@ -566,7 +566,7 @@ void KickChatServer::onJoin(uint64_t roomID) const
         qCWarning(chatterinoKick) << "No channel found for room" << roomID;
         return;
     }
-    existing->addSystemMessage("joined");
+    existing->addSystemMessage("joined", MessageFlag::ConnectionNotice);
     recording::publicEvent(*existing,
                            {{"kind", "connected"}, {"text", "Chat connected"}});
 }
