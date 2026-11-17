@@ -986,6 +986,8 @@ public:
         "/usercard/showSevenTVButton", true};
     BoolSetting showUsercardNameHistoryButton = {
         "/usercard/showNameHistoryButton", true};
+    BoolSetting showUsercardBanners = {
+        "/usercard/showBanners", false};
     BoolSetting showUsercardLoadMoreMessagesButton = {
         "/usercard/showLoadMoreMessagesButton", true};
     BoolSetting alwaysLoadMoreUsercardMessages = {

@@ -2312,6 +2312,10 @@ MoltorinoPage::MoltorinoPage()
                             s.showUsercardNameHistoryButton)
         ->setTooltip("Show a compact usercard button for previous Twitch names.")
         ->addTo(*view);
+    SettingWidget::checkbox("Show usercard banners",
+                            s.showUsercardBanners)
+        ->setTooltip("Show the user's profile banner on their usercard if they have one.")
+        ->addTo(*view);
 
     view->addSubtitle("Actions");
     view->addDescription(

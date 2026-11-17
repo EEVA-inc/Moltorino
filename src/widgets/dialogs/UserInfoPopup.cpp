@@ -1822,8 +1822,17 @@ public:
         : QWidget(parent)
     {
         this->setSizePolicy(QSizePolicy::Expanding,
-                            QSizePolicy::Fixed);
-        this->setFixedHeight(100);
+                            QSizePolicy::Preferred);
+    }
+
+    bool hasHeightForWidth() const override
+    {
+        return true;
+    }
+
+    int heightForWidth(int width) const override
+    {
+        return qRound(width * 0.2);
     }
 
     void setPixmap(QPixmap pixmap)
@@ -1833,17 +1842,6 @@ public:
     }
 
 protected:
-    void resizeEvent(QResizeEvent *event) override
-    {
-        QWidget::resizeEvent(event);
-
-        const auto height = std::clamp(this->width() / 4, 60, 100);
-        if (height != this->height())
-        {
-            this->setFixedHeight(height);
-        }
-    }
-
     void paintEvent(QPaintEvent *) override
     {
         QPainter painter(this);
@@ -2006,8 +2004,9 @@ UserInfoPopup::UserInfoPopup(bool closeAutomatically, Split *split)
     auto layout = layers.emplace<QVBoxLayout>();
 
     // IVR profile banner
-    if (!getApp()->getStreamerMode()->isEnabled() ||
-        !getSettings()->streamerModeHideUsercardBanners)
+    if (getSettings()->showUsercardBanners &&
+        (!getApp()->getStreamerMode()->isEnabled() ||
+         !getSettings()->streamerModeHideUsercardBanners))
     {
         auto *ivrBanner = new UsercardBanner(this);
         ivrBanner->hide();
