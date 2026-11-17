@@ -136,6 +136,7 @@
 #include <QStringBuilder>
 #include <QVBoxLayout>
 #include <QWidgetAction>
+#include <QLinearGradient>
 
 #include <tuple>
 #include <algorithm>
@@ -1815,6 +1816,80 @@ using namespace literals;
 
 static void openYouTubeUrl(const QUrl &url);
 
+class UsercardBanner : public QWidget
+{
+public:
+    explicit UsercardBanner(QWidget *parent)
+        : QWidget(parent)
+    {
+        this->setSizePolicy(QSizePolicy::Expanding,
+                            QSizePolicy::Preferred);
+    }
+
+    bool hasHeightForWidth() const override
+    {
+        return true;
+    }
+
+    int heightForWidth(int width) const override
+    {
+        return qRound(width * 0.2);
+    }
+
+    void setPixmap(QPixmap pixmap)
+    {
+        this->pixmap_ = std::move(pixmap);
+        this->update();
+    }
+
+protected:
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+
+        QPainterPath clip;
+        clip.addRoundedRect(QRectF(this->rect()), 8, 8);
+        painter.setClipPath(clip);
+        painter.fillRect(this->rect(), Qt::black);
+
+        if (!this->pixmap_.isNull())
+        {
+            const auto size = this->pixmap_.size().scaled(
+                this->size(), Qt::KeepAspectRatioByExpanding);
+
+            QRect target(QPoint(0, 0), size);
+            target.moveCenter(this->rect().center());
+            
+            painter.drawPixmap(target, this->pixmap_);
+        }
+
+        if (getSettings()->usercardBannerDisplayMode ==
+            QStringLiteral("background"))
+        {
+            // Dark overlay over the entire banner
+            painter.fillRect(
+                this->rect(),
+                QColor(0, 0, 0, 100));
+            
+            // Fade into the usercard background
+            QLinearGradient gradient(0, 0, 0, 100);
+            
+            gradient.setColorAt(0.0, QColor(15, 15, 15, 20));
+            gradient.setColorAt(0.4, QColor(15, 15, 15, 130));
+            gradient.setColorAt(1.0, QColor(15, 15, 15, 255));
+            
+            painter.fillRect(
+                QRect(0, 0, this->width(), 100),
+                gradient);
+        }
+    }
+
+private:
+    QPixmap pixmap_;
+};
+
 void UserInfoPopup::addShortcuts()
 {
     const auto makeModeratorHotkey = [this](bool promptForReason) {
@@ -1950,8 +2025,45 @@ UserInfoPopup::UserInfoPopup(bool closeAutomatically, Split *split)
                       .withoutMargin();
     auto layout = layers.emplace<QVBoxLayout>();
 
+    // IVR profile banner
+    if (getSettings()->showUsercardBanners &&
+        (!getApp()->getStreamerMode()->isEnabled() ||
+         !getSettings()->streamerModeHideUsercardBanners))
+    {
+        auto *ivrBanner = new UsercardBanner(this);
+        ivrBanner->hide();
+
+        this->ui_.ivrBanner = ivrBanner;
+
+        if (getSettings()->usercardBannerDisplayMode !=
+            QStringLiteral("background"))
+        {
+            layout->addWidget(ivrBanner);
+        }
+    }
+
+    // Profile header
+    auto *profileHeader = new QWidget(this);
+    auto *headerLayout = new QGridLayout(profileHeader);
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->setSpacing(0);
+
+    // Banner behind profile header
+    if (this->ui_.ivrBanner != nullptr &&
+        getSettings()->usercardBannerDisplayMode ==
+            QStringLiteral("background"))
+    {
+        this->ui_.ivrBanner->setFixedHeight(100);
+        headerLayout->addWidget(this->ui_.ivrBanner, 0, 0,
+                                Qt::AlignTop);
+    }
+
     // first line
-    auto head = layout.emplace<QHBoxLayout>().withoutMargin();
+    auto *headLayout = new QHBoxLayout;
+    headLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->addLayout(headLayout, 0, 0);
+
+    auto head = LayoutCreator<QHBoxLayout>(headLayout);
     {
         auto avatarBox = head.emplace<QVBoxLayout>().withoutMargin();
         avatarBox->setAlignment(Qt::AlignTop);
@@ -2368,6 +2480,7 @@ UserInfoPopup::UserInfoPopup(bool closeAutomatically, Split *split)
         }
     }
 
+    layout->addWidget(profileHeader);
     layout.emplace<Line>(false);
 
     // second line
@@ -6165,11 +6278,64 @@ void UserInfoPopup::updateUsercardColor()
     this->updateUsercardStatusIcons();
 }
 
+void UserInfoPopup::loadIvrBanner(const QString &bannerUrl)
+{
+    const auto generation = ++this->ivrBannerRequestGeneration_;
+    this->ivrBannerUrl_ = bannerUrl;
+
+    if (this->ui_.ivrBanner == nullptr)
+    {
+        return;
+    }
+
+    this->ui_.ivrBanner->setPixmap(QPixmap{});
+    this->ui_.ivrBanner->hide();
+
+    const QUrl url(bannerUrl);
+
+    if (bannerUrl.isEmpty() ||
+        !url.isValid() ||
+        url.scheme() != QStringLiteral("https") ||
+        url.host().isEmpty() ||
+        !url.userInfo().isEmpty() ||
+        url.port(443) != 443)
+    {
+        return;
+    }
+
+    NetworkRequest(bannerUrl)
+        .caller(this)
+        .timeout(10000)
+        .maximumResponseSize(MAX_AVATAR_BYTES)
+        .onSuccess([this, generation, bannerUrl](
+                       const NetworkResult &result) {
+            if (generation != this->ivrBannerRequestGeneration_ ||
+                bannerUrl != this->ivrBannerUrl_ ||
+                this->ui_.ivrBanner == nullptr)
+            {
+                return;
+            }
+
+            auto pixmap = readUsercardAvatar(result.getData());
+
+            if (pixmap.isNull())
+            {
+                return;
+            }
+
+            this->ui_.ivrBanner->setPixmap(pixmap);
+            this->ui_.ivrBanner->show();
+        })
+        .execute();
+}
+
 void UserInfoPopup::applyIvrUserProfile(const IvrUserProfile &profile)
 {
     auto *settings = getSettings();
 
     this->ui_.bannedAvatarLabel->setVisible(profile.banned);
+
+    this->loadIvrBanner(profile.banner);
 
     this->apiUserColor_ = QColor(profile.chatColor);
     this->apiUserColorLookupFinished_ = true;

@@ -799,6 +799,11 @@ void GeneralPage::initLayout(GeneralPageView &layout)
         ->setTooltip("Prevent potentially explicit avatars from showing.")
         ->addTo(layout);
 
+    SettingWidget::checkbox("Hide usercard banners",
+                            s.streamerModeHideUsercardBanners)
+        ->setTooltip("Prevent potentially explicit banners from showing.")
+        ->addTo(layout);
+
     SettingWidget::checkbox("Hide link thumbnails",
                             s.streamerModeHideLinkThumbnails)
         ->setTooltip("Prevent potentially explicit thumbnails from showing "

@@ -61,6 +61,7 @@ class ModeratorCommentsView;
 class UserBadgesView;
 class UserLogsView;
 class UserRolesView;
+class UsercardBanner;
 
 class UserInfoPopup final : public DraggablePopup
 {
@@ -167,6 +168,7 @@ private:
     void loadTwitchFollowage(bool onlyIfChanged = false);
     void setFollowage(const QDateTime &followedAt);
     void updateUsercardColor();
+    void loadIvrBanner(const QString &bannerUrl);
     void applyIvrUserProfile(const IvrUserProfile &profile);
     void updateIdentityStripVisibility();
     void refreshIdentityBadges();
@@ -255,6 +257,8 @@ private:
     QString platformRoles_;
     MessagePtr identityMessageFallback_;
     uint64_t userDataRequestGeneration_ = 0;
+    uint64_t ivrBannerRequestGeneration_ = 0;
+    QString ivrBannerUrl_;
     uint64_t followageRequestGeneration_ = 0;
     QStringList followageRequestKey_;
     bool twitchUserLookupFinished_ = false;
@@ -336,6 +340,7 @@ private:
         Label *createdDateLabel = nullptr;
         Label *userIDLabel = nullptr;
         QLabel *bannedAvatarLabel = nullptr;
+        UsercardBanner *ivrBanner = nullptr;
         QWidget *followageRow = nullptr;
         QLabel *followageIcon = nullptr;
         Label *followageLabel = nullptr;
