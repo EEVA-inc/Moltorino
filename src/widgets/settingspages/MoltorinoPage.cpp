@@ -2316,6 +2316,13 @@ MoltorinoPage::MoltorinoPage()
                             s.showUsercardBanners)
         ->setTooltip("Show the user's profile banner on their usercard if they have one.")
         ->addTo(*view);
+    const std::vector<std::pair<QString, QVariant>> bannerDisplayModes{
+        {"Above usercard", "above"}, {"Behind profile", "background"}};
+    SettingWidget::dropdown("Banner display",
+                            s.usercardBannerDisplayMode, bannerDisplayModes)
+        ->setTooltip("Choose where the user's profile banner is displayed.")
+        ->conditionallyEnabledBy(s.showUsercardBanners)
+        ->addTo(*view);
 
     view->addSubtitle("Actions");
     view->addDescription(

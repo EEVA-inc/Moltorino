@@ -988,6 +988,8 @@ public:
         "/usercard/showNameHistoryButton", true};
     BoolSetting showUsercardBanners = {
         "/usercard/showBanners", false};
+    QStringSetting usercardBannerDisplayMode = {
+        "/usercard/bannerDisplayMode", "above"};
     BoolSetting showUsercardLoadMoreMessagesButton = {
         "/usercard/showLoadMoreMessagesButton", true};
     BoolSetting alwaysLoadMoreUsercardMessages = {
