@@ -637,7 +637,7 @@ QUrl messageUrl(const QString &channel, const Message &message)
     {
         return {};
     }
-    QUrl url(QStringLiteral("https://tv.supa.sh/logs"));
+    QUrl url(QStringLiteral("https://lurkology.com/logs"));
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("c"), normalizedLogin(channel));
     query.addQueryItem(QStringLiteral("d"),
