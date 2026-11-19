@@ -223,6 +223,21 @@ public:
                                               const QString &channelName,
                                               uint32_t count = 1);
 
+    /// Badges shown in front of a user's name: Twitch badges from the tags,
+    /// then third-party badges, in the order the user picked in /vanity
+    void appendUserBadges(Communi::TagsRef tags, TwitchChannel *twitchChannel,
+                          const QString &userID, bool isCurrentUser);
+
+    /// The bold, clickable name chat puts in front of a message, using the
+    /// username display setting and the user's 7TV paint
+    void appendUsernameElement(const QString &login, const QString &displayName,
+                               MessageColor color);
+
+    /// A user's own text with Twitch, third-party and cheer emotes, as in chat
+    void appendUserText(Communi::TagsRef tags, TwitchChannel *twitchChannel,
+                        const QString &userID, const QString &text,
+                        int bits = 0);
+
 private:
     struct TextState {
         TwitchChannel *twitchChannel = nullptr;

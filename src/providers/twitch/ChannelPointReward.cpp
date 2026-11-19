@@ -66,6 +66,13 @@ ChannelPointReward::ChannelPointReward(const QJsonObject &redemption)
     this->title = reward.value("title").toString();
     this->cost = reward.value("cost").toInt();
     this->isUserInputRequired = reward.value("is_user_input_required").toBool();
+    this->userInput = redemption.value("user_input").toString().trimmed();
+    const auto redeemer = redemption.value("user").toObject();
+    this->redeemedBy = {
+        .id = redeemer.value("id").toString(),
+        .login = redeemer.value("login").toString(),
+        .displayName = redeemer.value("display_name").toString(),
+    };
     this->isBits = reward.value("pricing_type").toString() == "BITS";
 
     // accommodate idiosyncrasies of automatic reward redemptions

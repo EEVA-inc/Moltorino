@@ -2021,21 +2021,8 @@ std::pair<MessagePtrMut, HighlightAlert> MessageBuilder::makeIrcMessage(
                 channel->weak_from_this());
         }
 
-        const auto firstVanityBadge = builder.message().elements.size();
-        builder.appendTwitchBadges(tags, twitchChannel);
-
-        builder.appendChatterinoBadges(userID);
-        builder.appendFfzBadges(twitchChannel, userID);
-        builder.appendFfzApBadge(userID);
-        builder.appendBttvBadges(userID);
-        builder.appendBluzyrinoBadges(userID);
-        builder.appendJilChatBadges(userID);
-        builder.appendWydiosBadges(userID);
-        builder.appendBadgeHQBadges(userID);
-        builder.appendMoltorinoBadges(userID);
-        builder.appendSeventvBadges(userID);
-        builder.appendHomiesBadges(userID, senderIsCurrentUser);
-        builder.applyVanityBadgeLayout(userID, firstVanityBadge);
+        builder.appendUserBadges(tags, twitchChannel, userID,
+                                 senderIsCurrentUser);
 
         if (getSettings()->showPronounsInChat)
         {
@@ -3632,6 +3619,75 @@ void MessageBuilder::appendTwitchBadges(Communi::TagsRef tags,
 
     auto badgeInfos = parseBadgeInfoTag(tags);
     appendBadges(this, badges, badgeInfos, twitchChannel);
+}
+
+void MessageBuilder::appendUsernameElement(const QString &login,
+                                           const QString &displayName,
+                                           MessageColor color)
+{
+    auto &message = this->message();
+    message.loginName = login;
+    if (displayName.isEmpty() ||
+        QString::compare(displayName, login, Qt::CaseInsensitive) == 0)
+    {
+        message.displayName = displayName.isEmpty() ? login : displayName;
+    }
+    else
+    {
+        message.displayName = login;
+        message.localizedName = displayName;
+    }
+
+    this->emplace<TextElement>(stylizeUsername(message.displayName, message),
+                               MessageElementFlag::Username, color,
+                               FontStyle::ChatMediumBold)
+        ->setLink({Link::UserInfo, login});
+}
+
+void MessageBuilder::appendUserText(Communi::TagsRef tags,
+                                    TwitchChannel *twitchChannel,
+                                    const QString &userID, const QString &text,
+                                    int bits)
+{
+    if (text.isEmpty())
+    {
+        return;
+    }
+
+    TextState state{
+        .twitchChannel = twitchChannel,
+        .userID = userID,
+        .hasBits = bits > 0,
+        .bitsLeft = bits,
+    };
+    auto twitchEmotes = parseTwitchEmotes(tags, text, 0);
+    std::ranges::sort(twitchEmotes, [](const auto &a, const auto &b) {
+        return a.start < b.start;
+    });
+    const auto twitchGifs = parseTwitchGifs(tags, text, 0);
+
+    this->addWords(text.split(' '), twitchEmotes, twitchGifs, state);
+}
+
+void MessageBuilder::appendUserBadges(Communi::TagsRef tags,
+                                      TwitchChannel *twitchChannel,
+                                      const QString &userID, bool isCurrentUser)
+{
+    const auto firstVanityBadge = this->message().elements.size();
+    this->appendTwitchBadges(tags, twitchChannel);
+
+    this->appendChatterinoBadges(userID);
+    this->appendFfzBadges(twitchChannel, userID);
+    this->appendFfzApBadge(userID);
+    this->appendBttvBadges(userID);
+    this->appendBluzyrinoBadges(userID);
+    this->appendJilChatBadges(userID);
+    this->appendWydiosBadges(userID);
+    this->appendBadgeHQBadges(userID);
+    this->appendMoltorinoBadges(userID);
+    this->appendSeventvBadges(userID);
+    this->appendHomiesBadges(userID, isCurrentUser);
+    this->applyVanityBadgeLayout(userID, firstVanityBadge);
 }
 
 void MessageBuilder::appendChatterinoBadges(const QString &userID)

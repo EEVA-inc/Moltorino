@@ -27,6 +27,7 @@ public:
         , mentionsChannel(std::shared_ptr<Channel>(new MockChannel("forsen3")))
         , liveChannel(std::shared_ptr<Channel>(new MockChannel("forsen")))
         , automodChannel(std::shared_ptr<Channel>(new MockChannel("forsen2")))
+        , activityChannel(std::shared_ptr<Channel>(new MockChannel("forsen4")))
     {
     }
 
@@ -183,12 +184,18 @@ public:
         return this->automodChannel;
     }
 
+    ChannelPtr getActivityChannel() const override
+    {
+        return this->activityChannel;
+    }
+
     ChannelPtr watchingChannelInner;
     IndirectChannel watchingChannel;
     ChannelPtr whispersChannel;
     ChannelPtr mentionsChannel;
     ChannelPtr liveChannel;
     ChannelPtr automodChannel;
+    ChannelPtr activityChannel;
     QString lastUserThatWhisperedMe{"forsen"};
 
     std::unordered_map<QString, std::weak_ptr<Channel>> mockChannels;

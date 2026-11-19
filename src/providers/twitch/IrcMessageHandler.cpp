@@ -19,6 +19,7 @@
 #include "messages/MessageElement.hpp"
 #include "messages/MessageSink.hpp"
 #include "messages/MessageThread.hpp"
+#include "providers/twitch/ActivityFeed.hpp"
 #include "providers/twitch/TwitchAccount.hpp"
 #include "providers/twitch/TwitchAccountManager.hpp"
 #include "providers/twitch/TwitchChannel.hpp"
@@ -916,6 +917,7 @@ void IrcMessageHandler::handleUserNoticeMessage(Communi::IrcMessage *message,
         return;
     }
     parseUserNoticeMessageInto(message, *channel, channel);
+    activityfeed::addUserNotice(*message, *channel);
 }
 
 void IrcMessageHandler::parseUserNoticeMessageInto(Communi::IrcMessage *message,

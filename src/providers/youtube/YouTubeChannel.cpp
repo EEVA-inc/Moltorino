@@ -6,6 +6,7 @@
 #include "controllers/recording/ChatRecordingMessage.hpp"
 #include "messages/Message.hpp"
 #include "messages/MessageBuilder.hpp"
+#include "providers/twitch/ActivityFeed.hpp"
 #include "providers/twitch/TwitchIrcServer.hpp"
 #include "providers/youtube/YouTubeAccount.hpp"
 #include "providers/youtube/YouTubeAccountManager.hpp"
@@ -1100,6 +1101,34 @@ void YouTubeChannel::receiveMessages(
         {
             getApp()->getTwitch()->getMentionsChannel()->addMessage(
                 message, MessageContext::Original);
+        }
+        if (!historical && this->hasModRights())
+        {
+            switch (source.kind)
+            {
+                case YouTubeMessageKind::SuperChat:
+                    activityfeed::addPlatformEvent(
+                        message, activityfeed::EventType::Paid,
+                        activityfeed::amountFromDisplayString(
+                            source.amountDisplayString));
+                    break;
+                case YouTubeMessageKind::NewMembership:
+                case YouTubeMessageKind::MembershipMilestone:
+                    activityfeed::addPlatformEvent(
+                        message, activityfeed::EventType::Sub);
+                    break;
+                case YouTubeMessageKind::MembershipGift:
+                    activityfeed::addPlatformEvent(
+                        message, activityfeed::EventType::GiftSub);
+                    break;
+                case YouTubeMessageKind::Gift:
+                    // no Jewels value, so the minimum amount doesn't apply
+                    activityfeed::addPlatformEvent(
+                        message, activityfeed::EventType::Paid);
+                    break;
+                default:
+                    break;
+            }
         }
         if (historical)
         {

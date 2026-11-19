@@ -56,6 +56,8 @@ public:
         TwitchLive,
         /// TwitchAutomod
         TwitchAutomod,
+        /// TwitchActivity
+        TwitchActivity,
         /// TwitchEnd
         TwitchEnd,
         Kick,
@@ -236,6 +238,8 @@ constexpr magic_enum::customize::customize_t
             return "twitch";
         case Type::TwitchAutomod:
             return "automod";
+        case Type::TwitchActivity:
+            return "activity";
         case Type::TwitchMentions:
             return "mentions";
         case Type::TwitchWatching:

@@ -20,15 +20,21 @@ struct ChannelPointReward {
     int cost;
     ImageSet image;
     bool isUserInputRequired = false;
+    /// What the user typed, for rewards that ask for text
+    QString userInput;
     bool isBits = false;
     QString emoteId;    // currently only for celebrations
     QString emoteName;  // currently only for celebrations
 
-    struct {
+    struct User {
         QString id;
         QString login;
         QString displayName;
-    } user;
+    };
+    User user;
+    /// Who redeemed it, also for rewards with text, where `user` stays empty
+    /// because chat takes the user from the IRC message
+    User redeemedBy;
 
     QJsonObject toJson() const;
 };

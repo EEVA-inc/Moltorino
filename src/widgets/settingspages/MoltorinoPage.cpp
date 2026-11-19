@@ -2046,6 +2046,81 @@ MoltorinoPage::MoltorinoPage()
             "the list after changing its source.")
         ->addTo(*view);
 
+    view->addTitle("Activity feed");
+    view->addDescription(
+        "Add an Activity split from the split picker to see these events from "
+        "channels you moderate on Twitch, Kick and YouTube, and from your own "
+        "TikTok live. Right-click a line in the feed to hide alerts from that "
+        "user, of that kind, or from that platform.");
+
+    view->addSubtitle("Platforms");
+    SettingWidget::checkbox("Twitch", s.activityFeedTwitch)->addTo(*view);
+    SettingWidget::checkbox("Kick", s.activityFeedKick)->addTo(*view);
+    SettingWidget::checkbox("YouTube", s.activityFeedYouTube)->addTo(*view);
+    SettingWidget::checkbox("TikTok", s.activityFeedTikTok)->addTo(*view);
+
+    view->addSubtitle("Alerts");
+    SettingWidget::checkbox("Follows", s.activityFeedFollows)
+        ->setTooltip("Twitch follows are checked once a minute for your own "
+                     "channel and moderated channels open in a visible tab, "
+                     "using the same API as the Twitch website, and need a "
+                     "saved account in Moltorino Authentication. TikTok sends "
+                     "follows live.")
+        ->addTo(*view);
+    SettingWidget::checkbox("TikTok shares", s.activityFeedShares)
+        ->addTo(*view);
+    SettingWidget::checkbox("Subs and memberships", s.activityFeedSubscriptions)
+        ->addTo(*view);
+    SettingWidget::checkbox("Gifted subs and memberships",
+                            s.activityFeedGiftSubs)
+        ->addTo(*view);
+    SettingWidget::checkbox("Cheers, Kicks, Super Chats and TikTok gifts",
+                            s.activityFeedBits)
+        ->addTo(*view);
+    SettingWidget::checkbox("Raids and hosts", s.activityFeedRaids)
+        ->addTo(*view);
+    SettingWidget::checkbox("Channel point and Kick reward redemptions",
+                            s.activityFeedRedemptions)
+        ->addTo(*view);
+    SettingWidget::checkbox("Watch streaks and bits badges",
+                            s.activityFeedWatchStreaks)
+        ->addTo(*view);
+
+    view->addSubtitle("Minimum amounts");
+    SettingWidget::intInput("Cheers", s.activityFeedMinBits,
+                            {.min = 0, .max = 1000000, .suffix = " bits"})
+        ->setTooltip("Hide cheers below this many bits. 0 shows all of them.")
+        ->addTo(*view);
+    SettingWidget::intInput("Kicks", s.activityFeedMinKicks,
+                            {.min = 0, .max = 1000000, .suffix = " Kicks"})
+        ->setTooltip("Hide Kicks gifts below this many Kicks. 0 shows all of "
+                     "them.")
+        ->addTo(*view);
+    SettingWidget::intInput("Super Chats and Super Stickers",
+                            s.activityFeedMinSuperChat,
+                            {.min = 0, .max = 1000000})
+        ->setTooltip("Hide Super Chats and Super Stickers below this amount, "
+                     "in whatever currency each one was paid in. 0 shows all "
+                     "of them.")
+        ->addTo(*view);
+    SettingWidget::intInput("TikTok gifts", s.activityFeedMinTikTokGifts,
+                            {.min = 0, .max = 1000000, .suffix = " gifts"})
+        ->setTooltip("Hide TikTok gifts sent fewer times than this in one go. "
+                     "0 shows all of them.")
+        ->addTo(*view);
+
+    SettingWidget::lineEdit("Only these channels", s.activityFeedChannels,
+                            "all channels")
+        ->setTooltip("Only show alerts from these channels, separated by "
+                     "spaces. Leave it empty for every channel you own or "
+                     "moderate.")
+        ->addTo(*view);
+
+    SettingWidget::lineEdit("Hidden users", s.activityFeedHiddenUsers,
+                            "usernames separated by spaces")
+        ->setTooltip("Alerts from these users are never shown in the feed.")
+        ->addTo(*view);
+
     view->addTitle("Client");
     view->addDescription(
         "Twitch chat behavior, compatibility, and client experience options.");

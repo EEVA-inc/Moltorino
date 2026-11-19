@@ -11,6 +11,7 @@
 #include "providers/kick/KickMessageBuilder.hpp"
 #include "providers/seventv/eventapi/Dispatch.hpp"
 #include "providers/seventv/SeventvEventAPI.hpp"
+#include "providers/twitch/ActivityFeed.hpp"
 #include "providers/twitch/TwitchIrcServer.hpp"
 #include "singletons/Settings.hpp"
 #include "util/BoostJsonWrap.hpp"
@@ -422,9 +423,12 @@ void KickChatServer::onPinnedMessageDeletedEvent(KickChannel *channel,
 void KickChatServer::onStreamHostEvent(KickChannel *channel,
                                        BoostJsonObject data)
 {
-    appendRecordedKickEvent(channel,
-                            KickMessageBuilder::makeHostMessage(channel, data),
-                            {{"kind", "streamHosted"}});
+    auto msg = KickMessageBuilder::makeHostMessage(channel, data);
+    appendRecordedKickEvent(channel, msg, {{"kind", "streamHosted"}});
+    if (channel->hasModRights())
+    {
+        activityfeed::addPlatformEvent(msg, activityfeed::EventType::Raid);
+    }
 }
 
 void KickChatServer::onSubscriptionEvent(KickChannel *channel,
@@ -445,6 +449,10 @@ void KickChatServer::onSubscriptionEvent(KickChannel *channel,
         channel, second,
         {{"kind", "subscription"},
          {"months", static_cast<qint64>(data["months"].toInt64())}});
+    if (channel->hasModRights())
+    {
+        activityfeed::addPlatformEvent(second, activityfeed::EventType::Sub);
+    }
 }
 
 void KickChatServer::onGiftedSubscriptionEvent(KickChannel *channel,
@@ -460,6 +468,11 @@ void KickChatServer::onGiftedSubscriptionEvent(KickChannel *channel,
               static_cast<double>(data["gifted_usernames"].toArray().size())},
              {"totalGifts",
               static_cast<double>(data["gifter_total"].toUint64())}});
+        if (channel->hasModRights())
+        {
+            activityfeed::addPlatformEvent(msg,
+                                           activityfeed::EventType::GiftSub);
+        }
     }
 }
 
@@ -476,6 +489,11 @@ void KickChatServer::onRewardRedeemedEvent(KickChannel *channel,
              {"reward", data["reward_title"].toQString()},
              {"userInput", input}},
             msg->messageText + (input.isEmpty() ? QString{} : ": " + input));
+        if (channel->hasModRights())
+        {
+            activityfeed::addPlatformEvent(msg,
+                                           activityfeed::EventType::Redemption);
+        }
     }
 }
 
@@ -493,6 +511,12 @@ void KickChatServer::onKicksGiftedEvent(KickChannel *channel,
              {"kicks", static_cast<double>(data["gift"]["amount"].toUint64())},
              {"userInput", input}},
             msg->messageText + (input.isEmpty() ? QString{} : ": " + input));
+        if (channel->hasModRights())
+        {
+            activityfeed::addPlatformEvent(
+                msg, activityfeed::EventType::Paid,
+                static_cast<double>(data["gift"]["amount"].toUint64()));
+        }
     }
 }
 

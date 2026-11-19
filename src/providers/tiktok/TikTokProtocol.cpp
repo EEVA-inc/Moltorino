@@ -418,7 +418,8 @@ std::optional<TikTokEvent> event(const Fields &wrapper, bool initial)
     const bool emoteOnly = type == u"WebcastEmoteChatMessage";
     const bool gift = type == u"WebcastGiftMessage";
     const bool subscription = type == u"WebcastSubNotifyMessage";
-    if (!chat && !emoteOnly && !gift && !subscription &&
+    const bool social = type == u"WebcastSocialMessage";
+    if (!chat && !emoteOnly && !gift && !subscription && !social &&
         type != u"WebcastRoomUserSeqMessage" &&
         type != u"WebcastControlMessage" && type != u"WebcastImDeleteMessage" &&
         type != u"WebcastRoomVerifyMessage" &&
@@ -437,7 +438,7 @@ std::optional<TikTokEvent> event(const Fields &wrapper, bool initial)
         result.time = QDateTime::fromSecsSinceEpoch(qint64(seconds), Qt::UTC);
     }
     result.historical = initial || wrapper.number(6) != 0;
-    if (chat || emoteOnly || gift || subscription)
+    if (chat || emoteOnly || gift || subscription || social)
     {
         quint32 authorField = 2;
         quint32 identityField = 0;
@@ -514,6 +515,23 @@ std::optional<TikTokEvent> event(const Fields &wrapper, bool initial)
             result.kind = TikTokEvent::Kind::Subscription;
             result.author.subscriber = true;
             result.value = std::min<quint64>(payload.number(4), 1200);
+        }
+        else if (social)
+        {
+            // action is 1 for a follow and 3 for a share
+            const auto action = payload.number(4);
+            if (action == 1)
+            {
+                result.kind = TikTokEvent::Kind::Follow;
+            }
+            else if (action == 3)
+            {
+                result.kind = TikTokEvent::Kind::Share;
+            }
+            else
+            {
+                return std::nullopt;
+            }
         }
     }
     else if (type == u"WebcastRoomUserSeqMessage")

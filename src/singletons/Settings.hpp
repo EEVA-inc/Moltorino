@@ -1261,6 +1261,35 @@ public:
     /// 0 = Never, 1 = Only in moderation mode, 2 = Always
     IntSetting showSelfDeleteButton{
         "/moltorino/moderation/showSelfDeleteButton", 1};
+
+    BoolSetting activityFeedFollows{"/moltorino/activityFeed/follows", false};
+    BoolSetting activityFeedSubscriptions{
+        "/moltorino/activityFeed/subscriptions", true};
+    BoolSetting activityFeedBits{"/moltorino/activityFeed/bits", true};
+    BoolSetting activityFeedRaids{"/moltorino/activityFeed/raids", true};
+    BoolSetting activityFeedRedemptions{"/moltorino/activityFeed/redemptions",
+                                        true};
+    BoolSetting activityFeedWatchStreaks{"/moltorino/activityFeed/watchStreaks",
+                                         true};
+    BoolSetting activityFeedShares{"/moltorino/activityFeed/shares", false};
+    BoolSetting activityFeedGiftSubs{"/moltorino/activityFeed/giftSubs", true};
+    BoolSetting activityFeedTwitch{"/moltorino/activityFeed/twitch", true};
+    BoolSetting activityFeedKick{"/moltorino/activityFeed/kick", true};
+    BoolSetting activityFeedYouTube{"/moltorino/activityFeed/youtube", true};
+    BoolSetting activityFeedTikTok{"/moltorino/activityFeed/tiktok", true};
+    /// Paid alerts below these are hidden, 0 shows all
+    IntSetting activityFeedMinBits{"/moltorino/activityFeed/minBits", 0};
+    IntSetting activityFeedMinKicks{"/moltorino/activityFeed/minKicks", 0};
+    IntSetting activityFeedMinSuperChat{"/moltorino/activityFeed/minSuperChat",
+                                        0};
+    IntSetting activityFeedMinTikTokGifts{
+        "/moltorino/activityFeed/minTikTokGifts", 0};
+    /// Logins whose alerts are hidden, separated by spaces
+    QStringSetting activityFeedHiddenUsers{
+        "/moltorino/activityFeed/hiddenUsers", ""};
+    /// Only show alerts from these channels, separated by spaces. Empty shows
+    /// every channel you own or moderate
+    QStringSetting activityFeedChannels{"/moltorino/activityFeed/channels", ""};
     BoolSetting showModerationButtonsWithoutPermission{
         "/moltorino/moderation/showButtonsWithoutPermission", false};
     BoolSetting nukePreviewEnabled{

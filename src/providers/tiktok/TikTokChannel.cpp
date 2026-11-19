@@ -1,12 +1,16 @@
 #include "providers/tiktok/TikTokChannel.hpp"
 
 #include "Application.hpp"
+#include "controllers/accounts/AccountController.hpp"
 #include "messages/Message.hpp"
 #include "messages/MessageBuilder.hpp"
 #include "messages/MessageElement.hpp"
+#include "providers/tiktok/TikTokAccount.hpp"
 #include "providers/tiktok/TikTokChatServer.hpp"
 #include "providers/tiktok/TikTokMessageBuilder.hpp"
 #include "providers/tiktok/TikTokText.hpp"
+#include "providers/tiktok/TikTokTypes.hpp"
+#include "providers/twitch/ActivityFeed.hpp"
 #include "providers/twitch/TwitchIrcServer.hpp"
 
 #include <QRandomGenerator>
@@ -489,6 +493,20 @@ void TikTokChannel::receive(quint64 generation, tiktok::Batch batch)
         this->rememberEvent(event.id);
         this->rememberEvent(giftKey);
 
+        // Follows and shares would flood chat, so they only go to the feed
+        if (event.kind == TikTokEvent::Kind::Follow ||
+            event.kind == TikTokEvent::Kind::Share)
+        {
+            if (!event.historical && this->isOwnLive())
+            {
+                activityfeed::addPlatformEvent(
+                    message, event.kind == TikTokEvent::Kind::Follow
+                                 ? activityfeed::EventType::Follow
+                                 : activityfeed::EventType::Share);
+            }
+            continue;
+        }
+
         if (this->deletedMessages_.contains(event.id))
         {
             message->flags.set(MessageFlag::Disabled,
@@ -509,6 +527,18 @@ void TikTokChannel::receive(quint64 generation, tiktok::Batch batch)
             getApp()->getTwitch()->getMentionsChannel()->addMessage(
                 message, MessageContext::Repost);
         }
+        if (event.kind == TikTokEvent::Kind::Gift && this->isOwnLive())
+        {
+            activityfeed::addPlatformEvent(message,
+                                           activityfeed::EventType::Paid,
+                                           static_cast<double>(event.value));
+        }
+        else if (event.kind == TikTokEvent::Kind::Subscription &&
+                 this->isOwnLive())
+        {
+            activityfeed::addPlatformEvent(message,
+                                           activityfeed::EventType::Sub);
+        }
         MessageBuilder::triggerHighlights(this, message, alert);
     }
     flushHistory();
@@ -516,6 +546,16 @@ void TikTokChannel::receive(quint64 generation, tiktok::Batch batch)
     {
         this->streamDataChanged.invoke();
     }
+}
+
+bool TikTokChannel::isOwnLive() const
+{
+    // TikTok sends no moderator info, so only the user's own live counts for
+    // the activity feed
+    const auto account = getApp()->getAccounts()->tiktok.current();
+    const auto ownHandle = normalizeTikTokHandle(account->handle());
+    return !account->isAnonymous() && ownHandle &&
+           ownHandle == normalizeTikTokHandle(this->getName());
 }
 
 void TikTokChannel::sendMessage(const QString &message)

@@ -903,6 +903,8 @@ QString channelTypeToString(Channel::Type value) noexcept
             return "live";
         case Type::TwitchAutomod:
             return "automod";
+        case Type::TwitchActivity:
+            return "activity";
         case Type::Kick:
             return "kick";
         case Type::Misc:

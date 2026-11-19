@@ -496,7 +496,7 @@ bool Channel::isWritable() const
     using Type = Channel::Type;
     auto type = this->getType();
     return type != Type::TwitchMentions && type != Type::TwitchLive &&
-           type != Type::TwitchAutomod;
+           type != Type::TwitchAutomod && type != Type::TwitchActivity;
 }
 
 void Channel::sendMessage(const QString &message)

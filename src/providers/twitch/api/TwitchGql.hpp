@@ -99,6 +99,11 @@ struct GqlUser {
     QString displayName;
 };
 
+struct GqlFollower {
+    GqlUser user;
+    QDateTime followedAt;
+};
+
 struct GqlVanityBadge {
     QString id;
     QString setId;
@@ -511,6 +516,10 @@ public:
     static void getUserByLogin(
         const QString &login, const QString &oauthToken,
         std::function<void(std::optional<GqlUser>)> successCallback,
+        std::function<void(const QString &)> failureCallback);
+    static void getRecentFollowers(
+        const QString &channelId, const TwitchGqlAuth &auth,
+        std::function<void(QVector<GqlFollower>)> successCallback,
         std::function<void(const QString &)> failureCallback);
     static void followUser(
         const QString &targetId, const QString &oauthToken,

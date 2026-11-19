@@ -26,6 +26,8 @@ enum class YouTubeMessageKind : std::uint8_t {
     NewMembership,
     MembershipMilestone,
     MembershipGift,
+    /// A gift bought with Jewels. YouTube doesn't send its Jewels value
+    Gift,
     Tombstone,
     UserBanned,
     AuthorMessagesDeleted,
@@ -100,6 +102,7 @@ struct YouTubeMessage {
     QString eventText;
     QString amountDisplayString;
     QString membershipLevelName;
+    QString giftImageUrl;
     int memberMonths = 0;
     int giftCount = 0;
     std::vector<YouTubeMessageRun> runs;
@@ -236,6 +239,9 @@ public:
 private:
     std::deque<YouTubePendingSend> pending_;
 };
+
+/// Message text for a Super Sticker, which has a sticker instead of a comment
+[[nodiscard]] QString superStickerText(const QString &stickerName);
 
 [[nodiscard]] YouTubeMessageKind classifyYouTubeMessageType(
     QStringView sourceType) noexcept;

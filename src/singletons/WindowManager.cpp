@@ -1336,6 +1336,7 @@ void WindowManager::encodeChannel(IndirectChannel channel, QJsonObject &obj)
         case Channel::Type::TwitchMentions:
         case Channel::Type::TwitchLive:
         case Channel::Type::TwitchAutomod:
+        case Channel::Type::TwitchActivity:
 
         case Channel::Type::None:
         case Channel::Type::Direct:

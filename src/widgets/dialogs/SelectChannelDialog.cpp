@@ -321,6 +321,24 @@ SelectChannelDialog::SelectChannelDialog(QWidget *parent)
 
     ui.live->installEventFilter(&this->tabFilter_);
 
+    // Activity
+    ui.activity = new AutoCheckedRadioButton("Activity");
+    layout->addWidget(ui.activity);
+
+    ui.activityLabel = new QLabel(
+        "Shows follows, subs, gifts, raids and redemptions in channels you "
+        "moderate, including Kick, YouTube and your own TikTok live");
+    ui.activityLabel->setVisible(false);
+    ui.activityLabel->setWordWrap(true);
+    layout->addWidget(ui.activityLabel);
+
+    QObject::connect(ui.activity, &AutoCheckedRadioButton::toggled, this,
+                     [this](bool enabled) {
+                         this->ui_.activityLabel->setVisible(enabled);
+                     });
+
+    ui.activity->installEventFilter(&this->tabFilter_);
+
     // Automod
     ui.automod = new AutoCheckedRadioButton("AutoMod");
     layout->addWidget(ui.automod);
@@ -615,6 +633,11 @@ void SelectChannelDialog::setSelectedChannel(
             this->ui_.live->setFocus();
         }
         break;
+        case Channel::Type::TwitchActivity: {
+            this->ui_.channelAnonymous->setChecked(false);
+            this->ui_.activity->setFocus();
+        }
+        break;
         case Channel::Type::TwitchAutomod: {
             this->ui_.channelAnonymous->setChecked(false);
             this->ui_.automod->setFocus();
@@ -757,6 +780,11 @@ IndirectChannel SelectChannelDialog::getSelectedChannel() const
     if (this->ui_.live->isChecked())
     {
         return getApp()->getTwitch()->getLiveChannel();
+    }
+
+    if (this->ui_.activity->isChecked())
+    {
+        return getApp()->getTwitch()->getActivityChannel();
     }
 
     if (this->ui_.automod->isChecked())

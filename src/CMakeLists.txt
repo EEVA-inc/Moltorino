@@ -631,6 +631,8 @@ set(SOURCE_FILES
         providers/seventv/eventapi/Subscription.cpp
         providers/seventv/eventapi/Subscription.hpp
 
+        providers/twitch/ActivityFeed.cpp
+        providers/twitch/ActivityFeed.hpp
         providers/twitch/ChannelManagement.cpp
         providers/twitch/ChannelManagement.hpp
         providers/twitch/ChannelPointReward.cpp
