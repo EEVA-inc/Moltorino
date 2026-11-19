@@ -1113,7 +1113,7 @@ void UserLogsView::openOnWeb() const
     {
         return;
     }
-    QUrl url(QStringLiteral("https://tv.supa.sh/logs"));
+    QUrl url(QStringLiteral("https://lurkology.com/logs"));
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("c"), this->channel_);
     query.addQueryItem(QStringLiteral("u"), this->user_);

@@ -882,7 +882,7 @@ QString logs(const CommandContext &ctx)
         return "";
     }
 
-    QUrl url(QStringLiteral("https://tv.supa.sh/logs"));
+    QUrl url(QStringLiteral("https://lurkology.com/logs"));
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("c"), channelName);
     query.addQueryItem(QStringLiteral("u"), userName);
