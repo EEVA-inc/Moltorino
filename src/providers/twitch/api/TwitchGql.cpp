@@ -2690,8 +2690,8 @@ void TwitchGql::getUserByLogin(
     variables.insert("login", login);
 
     makeGqlRequest(QUERY, variables, oauthToken)
-        .onSuccess([successCallback, failureCallback](
-                       const NetworkResult &result) {
+        .onSuccess([successCallback,
+                    failureCallback](const NetworkResult &result) {
             const auto root = result.parseJsonValue();
             if (root.isUndefined() || root.isNull())
             {
@@ -2720,6 +2720,89 @@ void TwitchGql::getUserByLogin(
             }
 
             successCallback(std::move(user));
+        })
+        .onError([failureCallback](const NetworkResult &result) {
+            failureCallback("Network Error: " + result.formatError());
+        })
+        .execute();
+}
+
+void TwitchGql::getRecentFollowers(
+    const QString &channelId, const TwitchGqlAuth &auth,
+    std::function<void(QVector<GqlFollower>)> successCallback,
+    std::function<void(const QString &)> failureCallback)
+{
+    static constexpr char QUERY[] = R"(
+        query MoltorinoRecentFollowers($channelId: ID!) {
+            user(id: $channelId) {
+                followers(first: 20, order: DESC) {
+                    edges {
+                        followedAt
+                        node {
+                            id
+                            login
+                            displayName
+                        }
+                    }
+                }
+            }
+        }
+    )";
+
+    QJsonObject variables;
+    variables.insert("channelId", channelId);
+
+    makeAuthenticatedInlineGqlRequest(QUERY, variables, auth)
+        .onSuccess([successCallback,
+                    failureCallback](const NetworkResult &result) {
+            const auto root = result.parseJsonValue();
+            if (root.isUndefined() || root.isNull())
+            {
+                failureCallback("Failed to parse GQL response");
+                return;
+            }
+
+            const auto gqlError = extractFirstGqlErrorMessage(root);
+            if (!gqlError.isEmpty())
+            {
+                failureCallback("Twitch API Error: " + gqlError);
+                return;
+            }
+
+            const auto followers = payloadDataObject(root)
+                                       .value("user")
+                                       .toObject()
+                                       .value("followers")
+                                       .toObject();
+            if (followers.isEmpty())
+            {
+                failureCallback("Twitch did not return the follower list");
+                return;
+            }
+
+            QVector<GqlFollower> out;
+            for (const auto &edgeValue : followers.value("edges").toArray())
+            {
+                const auto edge = edgeValue.toObject();
+                const auto node = edge.value("node").toObject();
+                GqlFollower follower{
+                    .user =
+                        {
+                            .id = node.value("id").toString(),
+                            .login = node.value("login").toString(),
+                            .displayName = node.value("displayName").toString(),
+                        },
+                    .followedAt = QDateTime::fromString(
+                        edge.value("followedAt").toString(), Qt::ISODate),
+                };
+                if (!follower.user.id.isEmpty() &&
+                    follower.followedAt.isValid())
+                {
+                    out.append(std::move(follower));
+                }
+            }
+
+            successCallback(std::move(out));
         })
         .onError([failureCallback](const NetworkResult &result) {
             failureCallback("Network Error: " + result.formatError());

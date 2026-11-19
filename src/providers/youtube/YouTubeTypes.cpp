@@ -338,13 +338,21 @@ std::size_t YouTubePendingSendTracker::size() const noexcept
     return this->pending_.size();
 }
 
+QString superStickerText(const QString &stickerName)
+{
+    const auto name = stickerName.trimmed();
+    return name.isEmpty() ? QStringLiteral("Super Sticker")
+                          : QStringLiteral("Super Sticker: %1").arg(name);
+}
+
 YouTubeMessageKind classifyYouTubeMessageType(QStringView sourceType) noexcept
 {
     if (sourceType == u"textMessageEvent")
     {
         return YouTubeMessageKind::Text;
     }
-    if (sourceType == u"superChatEvent")
+    // Super Stickers are paid like Super Chats, with a sticker instead of text
+    if (sourceType == u"superChatEvent" || sourceType == u"superStickerEvent")
     {
         return YouTubeMessageKind::SuperChat;
     }
@@ -359,6 +367,10 @@ YouTubeMessageKind classifyYouTubeMessageType(QStringView sourceType) noexcept
     if (sourceType == u"membershipGiftingEvent")
     {
         return YouTubeMessageKind::MembershipGift;
+    }
+    if (sourceType == u"giftEvent")
+    {
+        return YouTubeMessageKind::Gift;
     }
     if (sourceType == u"tombstone" || sourceType == u"messageDeletedEvent" ||
         sourceType == u"messageRetractedEvent")
@@ -434,13 +446,23 @@ YouTubeMessage parseYouTubeMessage(const QJsonObject &object)
     switch (message.kind)
     {
         case YouTubeMessageKind::SuperChat: {
+            const bool sticker = sourceType == u"superStickerEvent";
             const auto details =
-                snippet.value(QStringLiteral("superChatDetails")).toObject();
+                snippet
+                    .value(sticker ? QStringLiteral("superStickerDetails")
+                                   : QStringLiteral("superChatDetails"))
+                    .toObject();
             message.amountDisplayString =
                 details.value(QStringLiteral("amountDisplayString"))
                     .toString();
             message.text =
-                details.value(QStringLiteral("userComment")).toString();
+                sticker
+                    ? superStickerText(
+                          details.value(QStringLiteral("superStickerMetadata"))
+                              .toObject()
+                              .value(QStringLiteral("altText"))
+                              .toString())
+                    : details.value(QStringLiteral("userComment")).toString();
             if (message.amountDisplayString.isEmpty())
             {
                 message.kind = YouTubeMessageKind::Ignored;
@@ -505,6 +527,23 @@ YouTubeMessage parseYouTubeMessage(const QJsonObject &object)
                 message.eventText = QStringLiteral("Member milestone");
             }
             message.author.isMember = true;
+            break;
+        }
+        case YouTubeMessageKind::Gift: {
+            const auto details =
+                snippet.value(QStringLiteral("giftDetails")).toObject();
+            message.eventText = message.text.trimmed();
+            if (message.eventText.isEmpty())
+            {
+                const auto giftName =
+                    details.value(QStringLiteral("giftName")).toString();
+                if (!giftName.isEmpty())
+                {
+                    message.eventText = QStringLiteral("sent ") + giftName;
+                }
+            }
+            message.giftImageUrl =
+                details.value(QStringLiteral("giftUrl")).toString();
             break;
         }
         case YouTubeMessageKind::MembershipGift: {

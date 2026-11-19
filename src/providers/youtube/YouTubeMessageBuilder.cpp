@@ -708,6 +708,7 @@ MessagePtrMut YouTubeMessageBuilder::makeSystemEvent(
             {
                 return nullptr;
             }
+            builder.appendRoleBadges(source.author);
             const auto name = builder->displayName.trimmed();
             const bool startsWithName =
                 !name.isEmpty() && text.startsWith(name) &&
@@ -726,8 +727,43 @@ MessagePtrMut YouTubeMessageBuilder::makeSystemEvent(
             }
             else
             {
+                // New member and gift texts ("Welcome to Members!", "Sent 5
+                // gift memberships") don't name the person, so show it first
+                if (!name.isEmpty())
+                {
+                    builder.appendLinkedUser(name + u':',
+                                             source.author.channelId,
+                                             builder->messageText);
+                }
                 builder.appendOrEmplaceText(text, MessageColor::System);
-                builder->messageText = text;
+                builder->messageText += text;
+            }
+            break;
+        }
+
+        case YouTubeMessageKind::Gift: {
+            builder->displayName = authorName(source.author);
+            builder->loginName = visibleYouTubeName(source.author.handle);
+            if (builder->loginName.isEmpty())
+            {
+                builder->loginName = builder->displayName;
+            }
+            text = source.eventText.trimmed();
+            if (text.isEmpty() || builder->displayName.trimmed().isEmpty())
+            {
+                return nullptr;
+            }
+            builder.appendLinkedUser(builder->displayName.trimmed(),
+                                     source.author.channelId,
+                                     builder->messageText);
+            builder.appendOrEmplaceText(text, MessageColor::System);
+            builder->messageText += text;
+            if (!source.giftImageUrl.isEmpty())
+            {
+                builder.emplace<EmoteElement>(
+                    YouTubeEmotes::makeCustomEmoji(text, source.giftImageUrl,
+                                                   source.id),
+                    MessageElementFlag::Emote, MessageColor::System);
             }
             break;
         }
@@ -766,6 +802,14 @@ void YouTubeMessageBuilder::appendChannelName()
 
 void YouTubeMessageBuilder::appendRoleBadges(const YouTubeAuthor &author)
 {
+    // Same order as YouTube's own chat: verified, then owner or moderator,
+    // then the member badge
+    if (author.isVerified)
+    {
+        appendRoleBadge(*this, youtubeVerifiedBadge(),
+                        MessageElementFlag::BadgeGlobalAuthority);
+    }
+
     if (author.isOwner)
     {
         appendRoleBadge(*this, youtubeOwnerBadge(),
@@ -781,12 +825,6 @@ void YouTubeMessageBuilder::appendRoleBadges(const YouTubeAuthor &author)
     {
         appendRoleBadge(*this, youtubeMemberBadge(author),
                         MessageElementFlag::BadgeSubscription);
-    }
-
-    if (author.isVerified)
-    {
-        appendRoleBadge(*this, youtubeVerifiedBadge(),
-                        MessageElementFlag::BadgeGlobalAuthority);
     }
 }
 

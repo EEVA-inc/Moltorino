@@ -62,6 +62,8 @@ struct TikTokEvent {
         Chat,
         Gift,
         Subscription,
+        Follow,
+        Share,
         Viewers,
         Control,
         Delete,

@@ -91,6 +91,9 @@ private:
         detail::AutoCheckedRadioButton *live;
         QLabel *liveLabel;
 
+        detail::AutoCheckedRadioButton *activity;
+        QLabel *activityLabel;
+
         detail::AutoCheckedRadioButton *automod;
         QLabel *automodLabel;
         QLineEdit *automodChannel;

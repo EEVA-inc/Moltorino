@@ -223,6 +223,7 @@ TwitchIrcServer::TwitchIrcServer()
     , mentionsChannel(new Channel("/mentions", Channel::Type::TwitchMentions))
     , liveChannel(new Channel("/live", Channel::Type::TwitchLive))
     , automodChannel(new Channel("/automod", Channel::Type::TwitchAutomod))
+    , activityChannel(new Channel("/activity", Channel::Type::TwitchActivity))
     , watchingChannel(Channel::getEmpty(), Channel::Type::TwitchWatching)
     , readConnectionMode_(getSettings()->twitchReadConnectionMode.getEnum())
 {
@@ -332,6 +333,12 @@ TwitchIrcServer::TwitchIrcServer()
 
 void TwitchIrcServer::initialize()
 {
+    if (!getApp()->isTest())
+    {
+        this->followerPoller_ =
+            std::make_unique<activityfeed::FollowerPoller>();
+    }
+
     this->signalHolder.managedConnect(
         getApp()->getAccounts()->twitch.currentUserChanged, [this]() {
             this->moderatedChannels_.clear();
@@ -723,6 +730,7 @@ void TwitchIrcServer::privateMessageReceived(
         auto *twitchChannel = static_cast<TwitchChannel *>(chan.get());
         IrcMessageHandler::parsePrivMessageInto(message, *twitchChannel,
                                                 twitchChannel);
+        activityfeed::addCheer(*message, *twitchChannel);
     }
 }
 
@@ -1300,6 +1308,11 @@ std::shared_ptr<Channel> TwitchIrcServer::getCustomChannel(
         return this->automodChannel;
     }
 
+    if (channelName == "/activity")
+    {
+        return this->activityChannel;
+    }
+
     static auto getTimer = [this](ChannelPtr channel, int msBetweenMessages,
                                   bool addInitialMessages) {
         if (addInitialMessages)
@@ -1413,6 +1426,7 @@ void TwitchIrcServer::forEachChannelAndSpecialChannels(
     func(this->mentionsChannel);
     func(this->liveChannel);
     func(this->automodChannel);
+    func(this->activityChannel);
 }
 
 std::shared_ptr<Channel> TwitchIrcServer::getChannelOrEmptyByID(
@@ -1573,6 +1587,11 @@ ChannelPtr TwitchIrcServer::getLiveChannel() const
 ChannelPtr TwitchIrcServer::getAutomodChannel() const
 {
     return this->automodChannel;
+}
+
+ChannelPtr TwitchIrcServer::getActivityChannel() const
+{
+    return this->activityChannel;
 }
 
 QString TwitchIrcServer::getLastUserThatWhisperedMe() const

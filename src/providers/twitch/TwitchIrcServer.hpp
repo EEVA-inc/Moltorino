@@ -4,14 +4,15 @@
 #include "common/Channel.hpp"
 #include "common/Common.hpp"
 #include "providers/irc/IrcConnection2.hpp"
-#include "util/RatelimitBucket.hpp"
+#include "providers/twitch/ActivityFeed.hpp"
 #include "util/CancellationToken.hpp"
-#include <QSet>
+#include "util/RatelimitBucket.hpp"
 
 #include <IrcMessage>
 #include <pajlada/signals/signal.hpp>
 #include <pajlada/signals/signalholder.hpp>
 #include <QHash>
+#include <QSet>
 #include <QTimer>
 #include <QVarLengthArray>
 
@@ -85,6 +86,7 @@ public:
     virtual ChannelPtr getMentionsChannel() const = 0;
     virtual ChannelPtr getLiveChannel() const = 0;
     virtual ChannelPtr getAutomodChannel() const = 0;
+    virtual ChannelPtr getActivityChannel() const = 0;
 
     virtual QString getLastUserThatWhisperedMe() const = 0;
     virtual void setLastUserThatWhisperedMe(const QString &user) = 0;
@@ -170,6 +172,8 @@ private:
     const ChannelPtr mentionsChannel;
     const ChannelPtr liveChannel;
     const ChannelPtr automodChannel;
+    const ChannelPtr activityChannel;
+    std::unique_ptr<activityfeed::FollowerPoller> followerPoller_;
     IndirectChannel watchingChannel;
 
 public:
@@ -179,6 +183,7 @@ public:
     ChannelPtr getMentionsChannel() const override;
     ChannelPtr getLiveChannel() const override;
     ChannelPtr getAutomodChannel() const override;
+    ChannelPtr getActivityChannel() const override;
 
     QString getLastUserThatWhisperedMe() const override;
     void setLastUserThatWhisperedMe(const QString &user) override;

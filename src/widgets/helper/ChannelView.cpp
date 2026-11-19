@@ -9,8 +9,8 @@
 #include "common/QLogging.hpp"
 #include "controllers/accounts/AccountController.hpp"
 #include "controllers/automod/AutoModReviewController.hpp"
-#include "controllers/commands/Command.hpp"
 #include "controllers/commands/builtin/twitch/Pin.hpp"
+#include "controllers/commands/Command.hpp"
 #include "controllers/commands/CommandController.hpp"
 #include "controllers/emotes/EmoteController.hpp"
 #include "controllers/filters/FilterSet.hpp"
@@ -38,10 +38,11 @@
 #include "providers/tiktok/TikTokChannel.hpp"
 #include "providers/tiktok/TikTokChatServer.hpp"
 #include "providers/tiktok/TikTokMessageBuilder.hpp"
+#include "providers/translation/Translator.hpp"
+#include "providers/twitch/ActivityFeed.hpp"
 #include "providers/twitch/TwitchAccount.hpp"
 #include "providers/twitch/TwitchChannel.hpp"
 #include "providers/twitch/TwitchIrcServer.hpp"
-#include "providers/translation/Translator.hpp"
 #include "providers/youtube/YouTubeAccount.hpp"
 #include "providers/youtube/YouTubeChannel.hpp"
 #include "providers/youtube/YouTubeMessageBuilder.hpp"
@@ -97,8 +98,8 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPointer>
-#include <QScreen>
 #include <QScopeGuard>
+#include <QScreen>
 #include <QSet>
 #include <QStringBuilder>
 #include <QTimer>
@@ -5709,10 +5710,18 @@ MessageElementFlags ChannelView::getFlags() const
             this->underlyingChannel_ ==
                 getApp()->getTwitch()->getLiveChannel() ||
             this->underlyingChannel_ ==
-                getApp()->getTwitch()->getAutomodChannel())
+                getApp()->getTwitch()->getAutomodChannel() ||
+            this->underlyingChannel_ ==
+                getApp()->getTwitch()->getActivityChannel())
         {
             flags.set(MessageElementFlag::ChannelName);
             flags.unset(MessageElementFlag::ChannelPointReward);
+        }
+        // The feed mixes platforms, so mark each line like multi-chat does
+        if (this->underlyingChannel_ ==
+            getApp()->getTwitch()->getActivityChannel())
+        {
+            flags.set(MessageElementFlag::PlatformBadgeAlways);
         }
     }
 
@@ -5867,7 +5876,8 @@ bool ChannelView::canReplyToMessage(const MessagePtr &message) const
     if (!source ||
         (!source->isTwitchOrKickChannel() && !source->isYouTubeChannel()) ||
         source->getType() == Channel::Type::TwitchWhispers ||
-        source->getType() == Channel::Type::TwitchLive)
+        source->getType() == Channel::Type::TwitchLive ||
+        source->getType() == Channel::Type::TwitchActivity)
     {
         return false;
     }
@@ -7046,6 +7056,7 @@ void ChannelView::mouseReleaseEvent(QMouseEvent *event)
                             QUrl(u"https://www.twitch.tv/" % userName));
                         break;
                     case Channel::Type::TwitchMentions:
+                    case Channel::Type::TwitchActivity:
                         openTwitchUsercard(layout->getMessage()->channelName,
                                            userName);
                         break;
@@ -7358,6 +7369,48 @@ void ChannelView::addMessageContextMenuItems(QMenu *menu,
                     });
 
     auto contextMessage = layout->getMessagePtr();
+    if (this->underlyingChannel_ == getApp()->getTwitch()->getActivityChannel())
+    {
+        if (const auto type = activityfeed::eventTypeOf(contextMessage))
+        {
+            menu->addSeparator();
+            if (!contextMessage->loginName.isEmpty())
+            {
+                const auto &name = contextMessage->displayName.isEmpty()
+                                       ? contextMessage->loginName
+                                       : contextMessage->displayName;
+                menu->addAction(u"Hide alerts from %1"_s.arg(name),
+                                [login = contextMessage->loginName] {
+                                    activityfeed::hideUser(login);
+                                });
+            }
+            menu->addAction(
+                u"Hide all %1"_s.arg(activityfeed::eventTypeName(*type)),
+                [type = *type] {
+                    activityfeed::hideType(type);
+                });
+            const auto platform = contextMessage->platform;
+            const auto platformName = [platform] {
+                switch (platform)
+                {
+                    case MessagePlatform::Kick:
+                        return u"Kick"_s;
+                    case MessagePlatform::YouTube:
+                        return u"YouTube"_s;
+                    case MessagePlatform::TikTok:
+                        return u"TikTok"_s;
+                    case MessagePlatform::AnyOrTwitch:
+                        break;
+                }
+                return u"Twitch"_s;
+            }();
+            menu->addAction(u"Hide all %1 alerts"_s.arg(platformName),
+                            [platform] {
+                                activityfeed::hidePlatform(platform);
+                            });
+            menu->addSeparator();
+        }
+    }
     if (contextMessage->translatedFrom != nullptr)
     {
         menu->addAction("Show &original", [channel = this->underlyingChannel_,
@@ -8299,6 +8352,8 @@ bool ChannelView::mayContainMessage(const MessagePtr &message)
             return message->flags.has(MessageFlag::System);
         case Channel::Type::TwitchAutomod:
             return message->flags.has(MessageFlag::AutoMod);
+        case Channel::Type::TwitchActivity:
+            return true;
         case Channel::Type::TwitchEnd:  // TODO: not used?
         case Channel::Type::None:       // Unspecific
         case Channel::Type::Misc:       // Unspecific
@@ -9026,7 +9081,8 @@ bool ChannelView::canReplyToMessages() const
                (channel->isTwitchOrKickChannel() ||
                 channel->isYouTubeChannel()) &&
                channel->getType() != Channel::Type::TwitchWhispers &&
-               channel->getType() != Channel::Type::TwitchLive;
+               channel->getType() != Channel::Type::TwitchLive &&
+               channel->getType() != Channel::Type::TwitchActivity;
     };
     if (const auto *multi =
             dynamic_cast<MultiChannel *>(this->underlyingChannel_.get()))

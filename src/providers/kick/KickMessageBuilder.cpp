@@ -523,6 +523,7 @@ KickMessageBuilder::KickMessageBuilder(SystemMessageTag ,
                                        const QDateTime &time)
     : channel_(channel)
 {
+    this->appendChannelName();
     this->emplace<TimestampElement>(time.time());
     this->message().flags.set(MessageFlag::System);
     this->message().platform = MessagePlatform::Kick;
@@ -533,6 +534,7 @@ KickMessageBuilder::KickMessageBuilder(KickChannel *channel,
                                        const QDateTime &time)
     : channel_(channel)
 {
+    this->appendChannelName();
     this->emplace<TimestampElement>(time.time());
     this->message().platform = MessagePlatform::Kick;
     this->message().serverReceivedTime = time;
@@ -970,8 +972,13 @@ MessagePtrMut KickMessageBuilder::makeKicksGiftedMessage(KickChannel *channel,
         builder.appendOrEmplaceText(u"Gifted"_s, MessageColor::Text);
         text += QStringLiteral("Gifted ");
     }
-    builder.emplace<TextElement>(giftName, MessageElementFlag::Text,
-                                 MessageColor::Text, FontStyle::ChatMediumBold);
+    if (!giftName.isEmpty())
+    {
+        builder.emplace<TextElement>(giftName, MessageElementFlag::Text,
+                                     MessageColor::Text,
+                                     FontStyle::ChatMediumBold);
+        text += giftName % u' ';
+    }
     QString kickInfo =
         '(' % localizeNumbers(giftAmount) % plural(u" Kicks", giftAmount) % ')';
     builder.appendOrEmplaceText(kickInfo, MessageColor::Text);

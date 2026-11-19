@@ -479,6 +479,42 @@ std::optional<YouTubeMessage> parsePaidRenderer(const QJsonObject &renderer,
     return message;
 }
 
+std::optional<YouTubeMessage> parsePaidStickerRenderer(
+    const QJsonObject &renderer, QStringView liveChatID)
+{
+    const auto id = requiredID(renderer.value(u"id"_s));
+    if (!id)
+    {
+        return std::nullopt;
+    }
+
+    YouTubeMessage message;
+    message.id = *id;
+    message.liveChatId = liveChatID.toString();
+    message.kind = YouTubeMessageKind::SuperChat;
+    message.publishedAt = parseTimestamp(renderer.value(u"timestampUsec"_s));
+    if (!parseRendererAuthor(renderer, message.author))
+    {
+        return std::nullopt;
+    }
+    message.amountDisplayString =
+        plainText(renderer.value(u"purchaseAmountText"_s), 128).trimmed();
+    if (message.amountDisplayString.isEmpty())
+    {
+        return std::nullopt;
+    }
+    message.text = superStickerText(renderer.value(u"sticker"_s)
+                                        .toObject()
+                                        .value(u"accessibility"_s)
+                                        .toObject()
+                                        .value(u"accessibilityData"_s)
+                                        .toObject()
+                                        .value(u"label"_s)
+                                        .toString()
+                                        .left(MAX_MESSAGE_CHARS));
+    return message;
+}
+
 std::optional<YouTubeMessage> parseMembershipRenderer(
     const QJsonObject &renderer, QStringView liveChatID)
 {
@@ -563,6 +599,50 @@ std::optional<YouTubeMessage> parseGiftPurchaseRenderer(
     return message;
 }
 
+// Gifts bought with Jewels. They come as a view model with only the author's
+// handle, the text ("sent Party hat") and the gift picture: no channel id and
+// no Jewels value.
+std::optional<YouTubeMessage> parseGiftViewModel(const QJsonObject &model,
+                                                 QStringView liveChatID)
+{
+    const auto id = requiredID(model.value(u"id"_s));
+    const auto name = boundedString(
+        model.value(u"authorName"_s).toObject().value(u"content"_s),
+        MAX_NAME_CHARS, true);
+    const auto text =
+        boundedString(model.value(u"text"_s).toObject().value(u"content"_s),
+                      MAX_MESSAGE_CHARS, true);
+    if (!id || !name || !text || name->trimmed().isEmpty() ||
+        text->trimmed().isEmpty())
+    {
+        return std::nullopt;
+    }
+
+    YouTubeMessage message;
+    message.id = *id;
+    message.liveChatId = liveChatID.toString();
+    message.kind = YouTubeMessageKind::Gift;
+    message.publishedAt = QDateTime::currentDateTimeUtc();
+    applyYouTubeAuthorName(message.author, name->trimmed());
+    message.eventText = text->trimmed();
+
+    qint64 bestWidth = -1;
+    for (const auto &source :
+         model.value(u"giftImage"_s).toObject().value(u"sources"_s).toArray())
+    {
+        const auto object = source.toObject();
+        const auto url = boundedString(object.value(u"url"_s), 8'192, true);
+        const auto width = object.value(u"width"_s).toInteger();
+        if (url && !url->isEmpty() && width > bestWidth)
+        {
+            bestWidth = width;
+            message.giftImageUrl =
+                url->startsWith(u"//") ? u"https:"_s + *url : *url;
+        }
+    }
+    return message;
+}
+
 std::optional<YouTubeMessage> parseSupportedRenderer(
     const QJsonObject &item, QStringView liveChatID)
 {
@@ -576,6 +656,11 @@ std::optional<YouTubeMessage> parseSupportedRenderer(
     {
         return parsePaidRenderer(renderer.toObject(), liveChatID);
     }
+    if (const auto renderer = item.value(u"liveChatPaidStickerRenderer"_s);
+        renderer.isObject())
+    {
+        return parsePaidStickerRenderer(renderer.toObject(), liveChatID);
+    }
     if (const auto renderer = item.value(u"liveChatMembershipItemRenderer"_s);
         renderer.isObject())
     {
@@ -586,6 +671,11 @@ std::optional<YouTubeMessage> parseSupportedRenderer(
         renderer.isObject())
     {
         return parseGiftPurchaseRenderer(renderer.toObject(), liveChatID);
+    }
+    if (const auto model = item.value(u"giftMessageViewModel"_s);
+        model.isObject())
+    {
+        return parseGiftViewModel(model.toObject(), liveChatID);
     }
     return std::nullopt;
 }

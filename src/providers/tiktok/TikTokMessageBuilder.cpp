@@ -75,6 +75,14 @@ QString eventText(const TikTokEvent &event, const TikTokChannel &channel)
         return event.value > 1 ? u"subscribed for %1 months"_s.arg(event.value)
                                : u"subscribed"_s;
     }
+    if (event.kind == TikTokEvent::Kind::Follow)
+    {
+        return u"followed"_s;
+    }
+    if (event.kind == TikTokEvent::Kind::Share)
+    {
+        return u"shared the live"_s;
+    }
     return event.text;
 }
 
@@ -176,7 +184,9 @@ std::pair<MessagePtrMut, HighlightAlert> makeTikTokMessage(
 {
     const bool gift = event.kind == TikTokEvent::Kind::Gift;
     const bool subscription = event.kind == TikTokEvent::Kind::Subscription;
-    const bool support = gift || subscription;
+    const bool social = event.kind == TikTokEvent::Kind::Follow ||
+                        event.kind == TikTokEvent::Kind::Share;
+    const bool support = gift || subscription || social;
     const auto text = eventText(event, *channel);
     if (text.isEmpty() &&
         std::ranges::none_of(event.emotes, [](const auto &emote) {
@@ -284,7 +294,7 @@ std::pair<MessagePtrMut, HighlightAlert> makeTikTokMessage(
             }
         }
     }
-    else if (subscription)
+    else if (subscription || social)
     {
         builder.emplace<TextElement>(text, MessageElementFlag::Text,
                                      MessageColor::Text,

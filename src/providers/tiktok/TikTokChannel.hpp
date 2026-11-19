@@ -49,6 +49,7 @@ public:
     pajlada::Signals::NoArgSignal userStateChanged;
 
 private:
+    bool isOwnLive() const;
     friend class TikTokChatServer;
     void openSocket();
     void closeSocket();

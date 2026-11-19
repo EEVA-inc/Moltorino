@@ -227,6 +227,8 @@ IndirectChannel SplitDescriptor::decodeChannel() const
             return getApp()->getTwitch()->getLiveChannel();
         case Channel::Type::TwitchAutomod:
             return getApp()->getTwitch()->getAutomodChannel();
+        case Channel::Type::TwitchActivity:
+            return getApp()->getTwitch()->getActivityChannel();
         case Channel::Type::Misc:
             return getApp()->getTwitch()->getChannelOrEmpty(this->channelName_);
         case Channel::Type::Kick:

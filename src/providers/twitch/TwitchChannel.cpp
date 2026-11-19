@@ -35,6 +35,7 @@
 #include "providers/seventv/SeventvAPI.hpp"
 #include "providers/seventv/SeventvEmotes.hpp"
 #include "providers/seventv/SeventvEventAPI.hpp"
+#include "providers/twitch/ActivityFeed.hpp"
 #include "providers/twitch/api/Helix.hpp"
 #include "providers/twitch/api/TwitchGql.hpp"
 #include "providers/twitch/ChannelPointReward.hpp"
@@ -58,8 +59,8 @@
 #include "widgets/Window.hpp"
 
 #include <IrcConnection>
-#include <QDateTime>
 #include <QDataStream>
+#include <QDateTime>
 #include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -1482,6 +1483,8 @@ void TwitchChannel::addChannelPointReward(const ChannelPointReward &reward)
     {
         return;
     }
+
+    activityfeed::addRedemption(reward, *this);
 
     if (!reward.isUserInputRequired)
     {
