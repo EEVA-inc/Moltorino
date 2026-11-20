@@ -2121,6 +2121,24 @@ MoltorinoPage::MoltorinoPage()
         ->setTooltip("Alerts from these users are never shown in the feed.")
         ->addTo(*view);
 
+    view->addTitle("BetterTTV");
+    view->addDescription(
+        "Show BetterTTV Pro name effects and BetterTTV's bot badges in chat.");
+
+    SettingWidget::dropdown("Name paints", s.namePaintSource)
+        ->setTooltip("BetterTTV Pro name effects are off by default. Pick a "
+                     "BTTV option to show them, and choose which one wins for "
+                     "a user who has both. Turning off \"Display 7TV Paints\" "
+                     "in General hides 7TV paints in every mode.")
+        ->addKeywords({"7tv", "bttv", "paint", "effect", "glow", "flare"})
+        ->addTo(*view);
+    SettingWidget::checkbox("Show BetterTTV bot badges", s.showBttvBotBadges)
+        ->setTooltip("Show BetterTTV's bot badge instead of the moderator "
+                     "badge for Nightbot, Moobot and the bots a channel lists "
+                     "on BetterTTV.")
+        ->addKeywords({"bttv", "bot", "nightbot", "moobot"})
+        ->addTo(*view);
+
     view->addTitle("Client");
     view->addDescription(
         "Twitch chat behavior, compatibility, and client experience options.");

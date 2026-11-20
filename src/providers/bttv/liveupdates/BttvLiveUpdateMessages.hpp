@@ -41,7 +41,10 @@ struct BttvLiveUpdateUserUpdateMessage {
     BttvLiveUpdateUserUpdateMessage(const QJsonObject &json);
 
     QString userID;
+    QString userName;
     QJsonObject badgeObject;
+    // empty when the user has no username effect
+    QString nameEffect;
 
     bool validate() const;
     bool hasBadge() const;

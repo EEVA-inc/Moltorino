@@ -7,7 +7,10 @@
 #include "Application.hpp"
 #include "providers/bttv/BttvBadges.hpp"
 #include "providers/bttv/BttvLiveUpdates.hpp"
+#include "providers/bttv/BttvNameEffect.hpp"
 #include "providers/bttv/liveupdates/BttvLiveUpdateMessages.hpp"
+#include "singletons/WindowManager.hpp"
+#include "util/PostToThread.hpp"
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -81,15 +84,32 @@ void BttvLiveUpdateClient::onMessage(const QByteArray &msg)
             return;
         }
 
-        if (!message.hasBadge())
+        auto *app = tryGetApp();
+        if (!app)
         {
             return;
         }
+        auto *bttvBadges = app->getBttvBadges();
 
-        auto *app = tryGetApp();
-        if (app)
+        if (!message.userName.isEmpty() &&
+            bttvBadges->setNameEffect(message.userName, message.nameEffect))
         {
-            auto *bttvBadges = app->getBttvBadges();
+            postToThread([effect = message.nameEffect] {
+                // Load the texture now so it's ready if this user's 7TV
+                // paint is later hidden in favor of it
+                if (auto paint = BttvNameEffect::fromName(effect))
+                {
+                    paint->ensureLoaded();
+                }
+                if (auto *current = tryGetApp())
+                {
+                    current->getWindows()->forceLayoutChannelViews();
+                }
+            });
+        }
+
+        if (message.hasBadge())
+        {
             auto badgeID = bttvBadges->registerBadge(message.badgeObject);
             bttvBadges->assignBadgeToUser(badgeID, UserId{message.userID});
         }
@@ -98,6 +118,11 @@ void BttvLiveUpdateClient::onMessage(const QByteArray &msg)
     {
         qCDebug(chatterinoBttv) << "Unhandled event:" << json;
     }
+}
+
+bool BttvLiveUpdateClient::isInChannel(const QString &channelID) const
+{
+    return this->isSubscribed({BttvLiveUpdateSubscriptionChannel{channelID}});
 }
 
 void BttvLiveUpdateClient::broadcastMe(const QString &channelID,

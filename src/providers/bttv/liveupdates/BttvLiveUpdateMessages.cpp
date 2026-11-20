@@ -57,7 +57,9 @@ bool BttvLiveUpdateEmoteRemoveMessage::validate() const
 BttvLiveUpdateUserUpdateMessage::BttvLiveUpdateUserUpdateMessage(
     const QJsonObject &json)
     : userID(json["providerId"_L1].toString())
+    , userName(json["name"_L1].toString().toLower())
     , badgeObject(json["badge"_L1].toObject())
+    , nameEffect(json["usernameEffect"_L1].toString())
 {
 }
 

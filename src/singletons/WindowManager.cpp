@@ -202,6 +202,7 @@ WindowManager::WindowManager(const Args &appArgs_, const Paths &paths,
     this->updateWordTypeMaskListener.add(settings.showBadgesWydios);
     this->updateWordTypeMaskListener.add(settings.showBadgesBadgeHQ);
     this->updateWordTypeMaskListener.add(settings.showBadgesBttv);
+    this->updateWordTypeMaskListener.add(settings.showBttvBotBadges);
     this->updateWordTypeMaskListener.add(settings.showBadgesSevenTV);
     this->updateWordTypeMaskListener.add(settings.showBadgesHomiesSupporter);
     this->updateWordTypeMaskListener.add(settings.showBadgesHomiesCustom);
@@ -240,6 +241,7 @@ WindowManager::WindowManager(const Args &appArgs_, const Paths &paths,
     this->forceLayoutChannelViewsListener.add(
         settings.hideMessageTimestampsWhenLive);
     this->forceLayoutChannelViewsListener.add(settings.timestampFormat);
+    this->forceLayoutChannelViewsListener.add(settings.namePaintSource);
     this->forceLayoutChannelViewsListener.add(
         settings.clientDetectionDisplayMode);
     this->forceLayoutChannelViewsListener.add(
@@ -386,6 +388,13 @@ void WindowManager::updateWordTypeMask()
     flags.set(settings->showBadgesWydios ? MEF::BadgeWydios : MEF::None);
     flags.set(settings->showBadgesBadgeHQ ? MEF::BadgeBadgeHQ : MEF::None);
     flags.set(settings->showBadgesBttv ? MEF::BadgeBttv : MEF::None);
+    // A known bot's message has both badges; only one of them is shown
+    if (settings->showBadgesChannelAuthority)
+    {
+        flags.set(settings->showBadgesBttv && settings->showBttvBotBadges
+                      ? MEF::BadgeBttvBot
+                      : MEF::BadgeBttvBotModerator);
+    }
     flags.set(settings->showBadgesSevenTV ? MEF::BadgeSevenTV : MEF::None);
     flags.set(settings->showBadgesHomiesSupporter.getValue()
                   ? MEF::BadgeHomiesSupporter

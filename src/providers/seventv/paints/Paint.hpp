@@ -52,6 +52,8 @@ protected:
     static QColor overlayColors(QColor background, QColor foreground);
     static qreal offsetRepeatingStopPosition(qreal position,
                                              const QGradientStops &stops);
+    /// The shadows drawn for a user color, for paints whose shadows depend on it
+    virtual std::vector<PaintDropShadow> dropShadowsFor(QColor userColor) const;
     virtual qint64 sourcePixmapCacheKey() const;
 
 private:

@@ -43,6 +43,7 @@
 #include "providers/seventv/SeventvBadges.hpp"
 #include "providers/seventv/SeventvEmotes.hpp"
 #include "providers/seventv/SeventvPersonalEmotes.hpp"
+#include "providers/seventv/SeventvUserCosmetics.hpp"
 #include "providers/twitch/api/Helix.hpp"
 #include "providers/twitch/ChannelPointReward.hpp"
 #include "providers/twitch/TwitchAccount.hpp"
@@ -521,6 +522,23 @@ void appendBadges(MessageBuilder *builder,
             continue;
         }
         auto tooltip = (*badgeEmote)->tooltip.string;
+        auto badgeFlag = badge.flag_;
+
+        // A known bot gets both BetterTTV's bot badge and its moderator badge.
+        // The bot badge setting picks which one shows, so changing it also
+        // updates messages that are already in chat.
+        if (badge.key_ == "moderator")
+        {
+            if (auto botBadge = getApp()->getBttvBadges()->getBotBadge(
+                    twitchChannel->roomId(), builder->message().loginName))
+            {
+                auto *botElement = builder->emplace<ModBadgeElement>(
+                    botBadge, MessageElementFlag::BadgeBttvBot);
+                botElement->setTooltip(botBadge->tooltip.string);
+                botElement->setTwitchBadge(badge.key_, badge.value_);
+                badgeFlag = MessageElementFlag::BadgeBttvBotModerator;
+            }
+        }
 
         if (badge.key_ == "bits")
         {
@@ -533,7 +551,7 @@ void appendBadges(MessageBuilder *builder,
             if (auto customModBadge = twitchChannel->ffzCustomModBadge())
             {
                 auto *badgeElement = builder->emplace<ModBadgeElement>(
-                    *customModBadge, MessageElementFlag::BadgeChannelAuthority);
+                    *customModBadge, badgeFlag);
                 badgeElement->setTooltip((*customModBadge)->tooltip.string);
                 badgeElement->setTwitchBadge(badge.key_, badge.value_);
                 // early out, since we have to add a custom badge element here
@@ -586,7 +604,7 @@ void appendBadges(MessageBuilder *builder,
         }
 
         auto *badgeElement =
-            builder->emplace<BadgeElement>(*badgeEmote, badge.flag_);
+            builder->emplace<BadgeElement>(*badgeEmote, badgeFlag);
         badgeElement->setTooltip(tooltip);
         badgeElement->setTwitchBadge(badge.key_, badge.value_);
     }
@@ -3686,6 +3704,7 @@ void MessageBuilder::appendUserBadges(Communi::TagsRef tags,
     this->appendBadgeHQBadges(userID);
     this->appendMoltorinoBadges(userID);
     this->appendSeventvBadges(userID);
+    lookUpSeventvCosmetics(userID, this->message().loginName);
     this->appendHomiesBadges(userID, isCurrentUser);
     this->applyVanityBadgeLayout(userID, firstVanityBadge);
 }
@@ -3890,6 +3909,12 @@ void MessageBuilder::appendFfzApBadge(const QString &userID)
 
 void MessageBuilder::appendBttvBadges(const QString &userID)
 {
+    if (auto badge = getApp()->getBttvBadges()->getStaffBadge({userID}))
+    {
+        this->emplace<BadgeElement>(*badge, MessageElementFlag::BadgeBttv);
+        this->message().externalBadges.emplace_back((*badge)->name.string);
+    }
+
     if (auto badge = getApp()->getBttvBadges()->getBadge({userID}))
     {
         this->emplace<BadgeElement>(*badge, MessageElementFlag::BadgeBttv);

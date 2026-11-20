@@ -268,6 +268,7 @@ void Application::initialize(Settings &settings, const Modes &modes,
     this->windows->initialize();
 
     this->ffzBadges->load();
+    this->bttvBadges->loadStaffBadges();
     this->ffzApBadges->initialize();
     this->bluzyrinoBadges->initialize();
     this->jilChatBadges->initialize();
