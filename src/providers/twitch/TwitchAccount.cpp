@@ -13,8 +13,10 @@
 #include "debug/AssertInGuiThread.hpp"
 #include "messages/Emote.hpp"
 #include "messages/MessageBuilder.hpp"
+#include "providers/seventv/eventapi/Dispatch.hpp"
 #include "providers/seventv/SeventvAPI.hpp"
 #include "providers/seventv/SeventvEmotes.hpp"
+#include "providers/seventv/SeventvPaints.hpp"
 #include "providers/seventv/SeventvPersonalEmotes.hpp"
 #include "providers/twitch/api/Helix.hpp"
 #include "providers/twitch/TwitchCommon.hpp"
@@ -26,6 +28,8 @@
 #include <QStringBuilder>
 #include <QThread>
 #include <QTimer>
+
+#include <span>
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -395,6 +399,21 @@ void TwitchAccount::loadSeventvUserID()
                 return;
             }
             this->seventvUserID_ = id;
+
+            // 7TV only sends the current user's paint once they chat, so use
+            // the one in this response to show it from the start
+            const auto paintID =
+                user["style"].toObject()["paint_id"].toString();
+            if (!paintID.isEmpty())
+            {
+                const seventv::eventapi::User self =
+                    seventv::eventapi::TwitchUser(QJsonObject{
+                        {"id", this->getUserId()},
+                        {"username", this->getUserName()},
+                    });
+                getApp()->getSeventvPaints()->assignPaintToUsers(
+                    paintID, std::span(&self, 1));
+            }
 
             for (const auto &emoteSetJson : user["emote_sets"].toArray())
             {

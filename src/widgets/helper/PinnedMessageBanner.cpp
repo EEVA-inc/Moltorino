@@ -207,6 +207,9 @@ namespace {
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeFfz);
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeFfzAp);
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeBttv);
+        setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeBttvBot);
+        setPinnedBadgeFlag(flags, wordFlags,
+                           MessageElementFlag::BadgeBttvBotModerator);
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeBluzyrino);
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeJilChat);
         setPinnedBadgeFlag(flags, wordFlags, MessageElementFlag::BadgeWydios);

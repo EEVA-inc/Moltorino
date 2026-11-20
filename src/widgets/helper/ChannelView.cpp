@@ -1974,9 +1974,9 @@ void ChannelView::initializeSignals()
     this->signalHolder_.managedConnect(
         getApp()->getWindows()->invalidateBuffersRequested,
         [this](Channel *channel) {
-            if (this->isVisible() &&
-                (channel == nullptr ||
-                 this->underlyingChannel_.get() == channel))
+            // Hidden views queue this too, so a tab shown later doesn't keep
+            // drawing names with a paint that has since changed
+            if (channel == nullptr || this->underlyingChannel_.get() == channel)
             {
                 this->invalidateBuffers();
             }

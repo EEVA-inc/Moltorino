@@ -6937,6 +6937,11 @@ void UserInfoPopup::refreshIdentityBadges()
                         }
                     }
                     if (const auto badge =
+                            getApp()->getBttvBadges()->getStaffBadge({userID}))
+                    {
+                        appendBadge(*badge, MessageElementFlag::BadgeBttv);
+                    }
+                    if (const auto badge =
                             getApp()->getBttvBadges()->getBadge({userID}))
                     {
                         appendBadge(*badge, MessageElementFlag::BadgeBttv);

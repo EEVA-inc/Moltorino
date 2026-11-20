@@ -449,6 +449,8 @@ set(SOURCE_FILES
         providers/bttv/BttvEmotes.hpp
         providers/bttv/BttvLiveUpdates.cpp
         providers/bttv/BttvLiveUpdates.hpp
+        providers/bttv/BttvNameEffect.cpp
+        providers/bttv/BttvNameEffect.hpp
 
         providers/bttv/liveupdates/BttvLiveUpdateClient.cpp
         providers/bttv/liveupdates/BttvLiveUpdateClient.hpp
@@ -610,6 +612,8 @@ set(SOURCE_FILES
         providers/seventv/SeventvPaints.hpp
         providers/seventv/SeventvPersonalEmotes.cpp
         providers/seventv/SeventvPersonalEmotes.hpp
+        providers/seventv/SeventvUserCosmetics.cpp
+        providers/seventv/SeventvUserCosmetics.hpp
 
         providers/seventv/paints/Paint.hpp
         providers/seventv/paints/Paint.cpp

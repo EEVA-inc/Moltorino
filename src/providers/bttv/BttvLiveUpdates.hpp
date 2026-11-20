@@ -6,6 +6,7 @@
 
 #include <pajlada/signals/signal.hpp>
 #include <QString>
+#include <QTimer>
 
 #include <memory>
 
@@ -45,7 +46,10 @@ public:
     const liveupdates::Diag &diag() const;
 
 private:
+    void announceCurrentUser();
+
     std::unique_ptr<BttvLiveUpdatesPrivate> private_;
+    QTimer announceTimer_;
 };
 
 }

@@ -10,6 +10,7 @@
 #include "messages/Image.hpp"
 #include "messages/layouts/MessageLayoutContext.hpp"
 #include "messages/MessageElement.hpp"
+#include "providers/bttv/BttvBadges.hpp"
 #include "providers/seventv/SeventvPaints.hpp"
 #include "providers/twitch/TwitchEmotes.hpp"
 #include "singletons/helper/GifTimer.hpp"
@@ -127,6 +128,32 @@ QMarginsF boundedNametagPaintMargins(const chatterino::Paint &paint,
         bounded(shadow.right(), horizontalLimit),
         bounded(shadow.bottom(), verticalLimit),
     };
+}
+
+std::shared_ptr<chatterino::Paint> usernamePaint(const QString &login,
+                                                 bool kick)
+{
+    using chatterino::NamePaintSource;
+    auto *app = chatterino::getApp();
+    const auto *settings = chatterino::getSettings();
+    const auto source = settings->namePaintSource.getEnum();
+
+    std::shared_ptr<chatterino::Paint> seventv;
+    if (settings->displaySevenTVPaints && source != NamePaintSource::OnlyBttv)
+    {
+        seventv = app->getSeventvPaints()->getPaint(login, kick);
+    }
+    std::shared_ptr<chatterino::Paint> bttv;
+    if (!kick && source != NamePaintSource::OnlySevenTV)
+    {
+        bttv = app->getBttvBadges()->getNameEffect(login);
+    }
+
+    if (seventv && bttv)
+    {
+        return source == NamePaintSource::BothPreferBttv ? bttv : seventv;
+    }
+    return seventv ? seventv : bttv;
 }
 
 QRectF expandedPaintRect(const QRectF &textRect, const QMarginsF &margins)
@@ -2023,14 +2050,12 @@ QString TextLayoutElement::getPaintTooltip() const
     const bool isNametag =
         link.type == Link::UserInfo || link.type == Link::UserWhisper;
     if (!isNametag || this->messageColor_ == MessageColor::System ||
-        this->getCreator().getFlags().has(
-            MessageElementFlag::NoUsernamePaint) ||
-        !getSettings()->displaySevenTVPaints)
+        this->getCreator().getFlags().has(MessageElementFlag::NoUsernamePaint))
     {
         return {};
     }
 
-    const auto paint = getApp()->getSeventvPaints()->getPaint(
+    const auto paint = usernamePaint(
         link.value.toLower(),
         this->getCreator().getFlags().has(MessageElementFlag::KickUsername));
     return paint ? paint->getTooltip() : QString{};
@@ -2191,16 +2216,14 @@ void TextLayoutElement::paintText(QPainter &painter, bool paintHighlights)
 
     bool isNametag = this->getLink().type == chatterino::Link::UserInfo ||
                      this->getLink().type == chatterino::Link::UserWhisper;
-    bool drawPaint = isNametag && this->messageColor_ != MessageColor::System &&
-                     !this->getCreator().getFlags().has(
-                         MessageElementFlag::NoUsernamePaint) &&
-                     getSettings()->displaySevenTVPaints;
+    bool drawPaint =
+        isNametag && this->messageColor_ != MessageColor::System &&
+        !this->getCreator().getFlags().has(MessageElementFlag::NoUsernamePaint);
     if (drawPaint)
     {
-        auto paint = app->getSeventvPaints()->getPaint(
-            this->getLink().value.toLower(),
-            this->getCreator().getFlags().has(
-                MessageElementFlag::KickUsername));
+        auto paint = usernamePaint(this->getLink().value.toLower(),
+                                   this->getCreator().getFlags().has(
+                                       MessageElementFlag::KickUsername));
         if (paint)
         {
             if (paint->animated())
@@ -2329,18 +2352,15 @@ QRegion TextLayoutElement::paintAnimated(QPainter &painter, const qreal yOffset,
     const bool isNametag =
         this->getLink().type == chatterino::Link::UserInfo ||
         this->getLink().type == chatterino::Link::UserWhisper;
-    const bool drawPaint = isNametag &&
-                           this->messageColor_ != MessageColor::System &&
-                           !this->getCreator().getFlags().has(
-                               MessageElementFlag::NoUsernamePaint) &&
-                           getSettings()->displaySevenTVPaints;
+    const bool drawPaint =
+        isNametag && this->messageColor_ != MessageColor::System &&
+        !this->getCreator().getFlags().has(MessageElementFlag::NoUsernamePaint);
     QRegion paintedRegion;
     if (drawPaint)
     {
-        const auto paint = getApp()->getSeventvPaints()->getPaint(
-            this->getLink().value.toLower(),
-            this->getCreator().getFlags().has(
-                MessageElementFlag::KickUsername));
+        const auto paint = usernamePaint(this->getLink().value.toLower(),
+                                         this->getCreator().getFlags().has(
+                                             MessageElementFlag::KickUsername));
         if (paint && paint->animated())
         {
             const auto margins =

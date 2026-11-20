@@ -104,12 +104,12 @@ QPixmap Paint::getPixmap(const QString &text, const QFont &font,
             contentPixmap);
     }
 
-    if (!this->getDropShadows().empty() &&
-        getSettings()->displaySevenTVPaintShadows)
+    const auto dropShadows = this->dropShadowsFor(userColor);
+    if (!dropShadows.empty() && getSettings()->displaySevenTVPaintShadows)
     {
         QPixmap outMap((size * dpr).toSize());
         outMap.setDevicePixelRatio(dpr);
-        for (const auto &shadow : this->getDropShadows())
+        for (const auto &shadow : dropShadows)
         {
             if (!shadow.isValid())
             {
@@ -200,6 +200,11 @@ bool Paint::failed() const
 
 void Paint::ensureLoaded(bool) const
 {
+}
+
+std::vector<PaintDropShadow> Paint::dropShadowsFor(QColor /*userColor*/) const
+{
+    return this->getDropShadows();
 }
 
 qint64 Paint::sourcePixmapCacheKey() const

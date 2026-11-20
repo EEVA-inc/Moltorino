@@ -1278,6 +1278,8 @@ void GeneralPage::initLayout(GeneralPageView &layout)
         ->addTo(layout);
     SettingWidget::checkbox("BetterTTV", s.showBadgesBttv)
         ->addKeywords({"bttv"})
+        ->setTooltip("BetterTTV Pro, developer, translator and emote "
+                     "approver badges")
         ->addTo(layout);
     SettingWidget::checkbox("Homies Supporter", s.showBadgesHomiesSupporter)
         ->addKeywords({"homies", "supporter"})
