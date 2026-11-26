@@ -1691,6 +1691,11 @@ void SplitInput::handleUrlPaste(const QString &url, QTextCursor cursor)
         return;
     }
 
+    if (url.length() <= getSettings()->urlShortenerMinLength.getValue())
+    {
+        return;
+    }
+
     auto channel = this->replyChannel_.lock();
     if (!channel)
     {

@@ -305,6 +305,11 @@ void ExternalToolsPage::initLayout(GeneralPageView &layout)
                                 s.askOnUrlShorten)
             ->addTo(layout);
 
+        SettingWidget::intInput("Minimum URL length (without https://)", s.urlShortenerMinLength,
+            {.min = 1, .max = 500, .singleStep = 1})
+            ->conditionallyEnabledBy(s.urlShortenerEnabled)
+            ->addTo(layout, form);
+
         layout.addLayout(form);
 
         SettingWidget::lineEdit(
