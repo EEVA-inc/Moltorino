@@ -2213,7 +2213,7 @@ MoltorinoPage::MoltorinoPage()
     ->addTo(*view);
 
     SettingWidget::lineEdit("Your domain", s.yourDomain,
-                        "e.g. wydios.de")
+                        "e.g. example.com")
     ->setTooltip(
         "Your domain, without https:// or a path. Subdomains are "
         "included automatically.")
