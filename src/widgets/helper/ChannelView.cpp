@@ -6637,11 +6637,6 @@ void ChannelView::mouseMoveEvent(QMouseEvent *event)
                 (showThumbnailSetting == ThumbnailPreviewMode::ShowOnShift &&
                  event->modifiers() == Qt::ShiftModifier);
 
-            if (this->hoverAnimateOnly_)
-            {
-                showThumbnail = false;
-            }
-
             if (emoteElement)
             {
                 const auto &emote = emoteElement->getEmote();
