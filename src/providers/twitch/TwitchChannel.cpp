@@ -6286,18 +6286,29 @@ bool TwitchChannel::isChannelPointsFetchInFlight() const
 
 bool TwitchChannel::shouldShowChannelPoints() const
 {
+    return !this->isOwnChannel();
+}
+
+bool TwitchChannel::isOwnChannel() const
+{
     const auto auth = MoltorinoAuth::resolveCurrentUserToken();
     if (auth.hasToken() && authTokenHasKnownIdentity(auth))
     {
-        return !authTokenBelongsToChannel(auth, *this);
+        return authTokenBelongsToChannel(auth, *this);
     }
 
-    return !this->isBroadcaster();
+    return this->isBroadcaster();
 }
 
 void TwitchChannel::setChannelPointBalance(qint64 balance)
 {
     assertInGuiThread();
+    // Twitch reports 0 points in your own channel, but you can redeem
+    // there for free, so keep the balance unknown instead
+    if (balance >= 0 && this->isOwnChannel())
+    {
+        balance = -1;
+    }
     ++this->channelPointsStateRevision_;
     this->lastChannelPointsUpdateAt_ = QDateTime::currentDateTimeUtc();
 

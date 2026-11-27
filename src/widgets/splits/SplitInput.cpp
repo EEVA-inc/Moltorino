@@ -2030,6 +2030,17 @@ void SplitInput::initLayout()
         this->ui_.pollButton->setToolTip("Open poll");
         this->ui_.pollButton->hide();
 
+        // you have no points in your own channel, so the points label is
+        // replaced by this button there
+        this->ui_.rewardsButton = new SvgButton(
+            {
+                .dark = ":/buttons/rewards-darkMode.svg",
+                .light = ":/buttons/rewards-lightMode.svg",
+            },
+            nullptr, QSize{3, 3});
+        this->ui_.rewardsButton->setToolTip("Open your rewards");
+        this->ui_.rewardsButton->hide();
+
         this->ui_.outgoingTranslateButton = new SvgButton(
             {
                 .dark = ":/buttons/translate-darkMode.svg",
@@ -2074,6 +2085,7 @@ void SplitInput::initLayout()
         buttonsRow->addWidget(this->ui_.sendWaitStatus, 0, Qt::AlignBottom);
         buttonsRow->addWidget(this->ui_.channelPointsLabel, 0,
                               Qt::AlignBottom);
+        buttonsRow->addWidget(this->ui_.rewardsButton, 0, Qt::AlignBottom);
         buttonsRow->addWidget(this->ui_.predictionButton, 0,
                               Qt::AlignBottom);
         buttonsRow->addWidget(this->ui_.pollButton, 0, Qt::AlignBottom);
@@ -2137,6 +2149,17 @@ void SplitInput::initLayout()
         }
         PollDialog::showDialog(channel, this->split_);
     });
+
+#if MOLTORINO_ENABLE_CHANNEL_POINT_REWARDS
+    QObject::connect(this->ui_.rewardsButton, &Button::leftClicked, [this] {
+        auto *channel = dynamic_cast<TwitchChannel *>(
+            this->split_->getSelectedChannel().get());
+        if (channel)
+        {
+            ChannelPointsDialog::showDialog(channel, this, this->split_);
+        }
+    });
+#endif
 
     // clear input and remove reply thread
     QObject::connect(this->ui_.cancelReplyButton, &Button::leftClicked, [this] {
@@ -2435,6 +2458,10 @@ void SplitInput::updateEmoteButton()
     {
         this->ui_.pollButton->setFixedSize(buttonSize, buttonSize);
     }
+    if (this->ui_.rewardsButton)
+    {
+        this->ui_.rewardsButton->setFixedSize(buttonSize, buttonSize);
+    }
     if (this->ui_.outgoingTranslateButton)
     {
         this->ui_.outgoingTranslateButton->setFixedSize(buttonSize,
@@ -2550,6 +2577,8 @@ void SplitInput::updateActionRowCompactness()
 
     const bool showChannelPoints = reserveEvenIfTight(
         this->ui_.channelPointsLabel, this->channelPointsLabelWanted_);
+    const bool showRewardsButton = reserveEvenIfTight(
+        this->ui_.rewardsButton, this->rewardsButtonWanted_);
     const bool showPredictionButton =
         tryFit(this->ui_.predictionButton, this->predictionButtonWanted_);
     const bool showPollButton =
@@ -2571,6 +2600,7 @@ void SplitInput::updateActionRowCompactness()
     changed |= setExplicitVisible(this->ui_.sendWaitStatus, showSendWaitStatus);
     changed |=
         setExplicitVisible(this->ui_.channelPointsLabel, showChannelPoints);
+    changed |= setExplicitVisible(this->ui_.rewardsButton, showRewardsButton);
 
     if (changed)
     {
@@ -5336,6 +5366,7 @@ void SplitInput::bindChannelPoints(TwitchChannel *channel)
     this->pollStateSignal_ = pajlada::Signals::ScopedConnection();
     this->focusedPointsConnection_ = pajlada::Signals::ScopedConnection();
     this->focusLostPointsConnection_ = pajlada::Signals::ScopedConnection();
+    this->rewardsButtonWanted_ = false;
 
     auto updateActionButtons = [this, channel]() {
         const bool canModerate =
@@ -5387,6 +5418,12 @@ void SplitInput::bindChannelPoints(TwitchChannel *channel)
     if (!channel->shouldShowChannelPoints())
     {
         this->clearChannelPointsDisplay();
+#if MOLTORINO_ENABLE_CHANNEL_POINT_REWARDS
+        this->rewardsButtonWanted_ =
+            channel->isOwnChannel() &&
+            getSettings()->openRewardsWithChannelPointsClick;
+        this->updateActionRowCompactness();
+#endif
         return;
     }
 

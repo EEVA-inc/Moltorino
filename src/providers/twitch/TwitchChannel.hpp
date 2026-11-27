@@ -374,6 +374,8 @@ public:
     qint64 channelPointBalance() const;
     bool isChannelPointsFetchInFlight() const;
     bool shouldShowChannelPoints() const;
+    /// True when the signed-in account owns this channel
+    bool isOwnChannel() const;
     void setChannelPointBalance(qint64 balance);
     void handleChatWarningPubSub(const QJsonObject &payload);
     void handleChatWarningNotice();

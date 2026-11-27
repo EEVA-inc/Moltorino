@@ -1173,6 +1173,10 @@ void ChannelPointsDialog::refreshHeader()
             QStringLiteral("Cost: %1")
                 .arg(rewardCostLabel(this->selectedReward_, false)));
     }
+    else if (this->channel_->isOwnChannel())
+    {
+        this->headerSubtitleLabel_->setText(QStringLiteral("Your channel"));
+    }
     else
     {
         this->headerSubtitleLabel_->setText(
@@ -1389,6 +1393,12 @@ void ChannelPointsDialog::reloadRewards()
             self->rewardsLoading_ = false;
             self->rewardsChannelId_ = rewards.channelId;
             self->rewards_ = std::move(rewards.rewards);
+            // Twitch accepts Bits rewards in your own channel for free but
+            // twitch.tv doesn't show their effect, so only offer points ones
+            if (self->channel_->isOwnChannel())
+            {
+                self->rewards_.removeIf(isBitsReward);
+            }
             self->rewardImageRefreshAttempts_ = 0;
             self->rewardImageRefreshQueued_ = false;
             self->setStatus({});
