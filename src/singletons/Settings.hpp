@@ -128,6 +128,15 @@ enum class EmoteTooltipScale : std::uint8_t {
     Huge,
 };
 
+/// Which name paints to draw: 7TV paints, BTTV name effects, or both with one
+/// winning for a user who has both
+enum class NamePaintSource : std::uint8_t {
+    OnlySevenTV,
+    BothPreferSevenTV,
+    BothPreferBttv,
+    OnlyBttv,
+};
+
 enum class BadgeAlignmentMode : int {
     Balanced = 0,
     Chatterino = 1,
@@ -161,6 +170,22 @@ constexpr std::optional<std::string_view> qmagicenumDisplayName(
 
         case TwitchReadConnectionMode::AnonymousParallel:
             return "Anonymous (parallel)";
+    }
+}
+
+constexpr std::optional<std::string_view> qmagicenumDisplayName(
+    NamePaintSource value) noexcept
+{
+    switch (value)
+    {
+        case NamePaintSource::OnlySevenTV:
+            return "Only 7TV";
+        case NamePaintSource::BothPreferSevenTV:
+            return "7TV and BTTV, 7TV first";
+        case NamePaintSource::BothPreferBttv:
+            return "7TV and BTTV, BTTV first";
+        case NamePaintSource::OnlyBttv:
+            return "Only BTTV";
     }
 }
 
@@ -346,6 +371,10 @@ public:
         "/misc/displaySevenTVPaintShadows", true};
     BoolSetting largeSevenTVPaintShadows = {"/misc/largeSevenTVPaintShadows",
                                             true};
+    EnumStringSetting<NamePaintSource> namePaintSource = {
+        "/misc/namePaintSource",
+        NamePaintSource::OnlySevenTV,
+    };
     BoolSetting boldUsernames = {"/appearance/messages/boldUsernames", true};
     BoolSetting colorUsernames = {"/appearance/messages/colorUsernames", true};
     BoolSetting linkChannelNames = {"/appearance/messages/linkChannelNames",
@@ -411,6 +440,7 @@ public:
     BoolSetting useCustomFfzVipBadges = {
         "/appearance/badges/useCustomFfzVipBadges", true};
     BoolSetting showBadgesBttv = {"/appearance/badges/bttv", true};
+    BoolSetting showBttvBotBadges = {"/appearance/badges/bttvBot", false};
     BoolSetting showBadgesSevenTV = {"/appearance/badges/seventv", true};
     BoolSetting showBadgesHomiesSupporter = {
         "/appearance/badges/homies/supporter", true};

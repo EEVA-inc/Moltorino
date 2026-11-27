@@ -4,6 +4,7 @@
 
 #include "providers/bttv/BttvEmotes.hpp"
 
+#include "Application.hpp"
 #include "common/network/NetworkRequest.hpp"
 #include "common/network/NetworkResult.hpp"
 #include "common/network/RetryingGet.hpp"
@@ -12,6 +13,7 @@
 #include "messages/Image.hpp"
 #include "messages/ImageSet.hpp"
 #include "messages/MessageBuilder.hpp"
+#include "providers/bttv/BttvBadges.hpp"
 #include "providers/bttv/liveupdates/BttvLiveUpdateMessages.hpp"
 #include "providers/twitch/TwitchChannel.hpp"
 #include "singletons/Settings.hpp"
@@ -371,8 +373,13 @@ void BttvEmotes::loadChannel(std::weak_ptr<Channel> channel,
         QString(bttvChannelEmoteApiUrl) + channelId,
         [callback = std::move(callback), channel, channelId, channelDisplayName,
          manualRefresh](auto result) {
-            auto emotes =
-                parseChannelEmotes(result.parseJson(), channelDisplayName);
+            const auto root = result.parseJson();
+            if (auto *app = tryGetApp())
+            {
+                app->getBttvBadges()->setChannelBots(
+                    channelId, root.value("bots").toArray());
+            }
+            auto emotes = parseChannelEmotes(root, channelDisplayName);
             bool hasEmotes = !emotes.empty();
             writeProviderEmotesCache(channelId, "betterttv", result.getData());
             callback(std::move(emotes));

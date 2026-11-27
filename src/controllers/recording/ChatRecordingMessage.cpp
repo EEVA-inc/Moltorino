@@ -249,6 +249,12 @@ QJsonObject normalizeMessage(const Channel &channel, const Message &message,
                                  {"assetId", id}});
         cursor = position + name.size();
     };
+    // A known bot's message has both its moderator badge and BetterTTV's bot
+    // badge, so leave out the one chat isn't showing
+    const auto hiddenBotBadge =
+        getSettings()->showBadgesBttv && getSettings()->showBttvBotBadges
+            ? MessageElementFlag::BadgeBttvBotModerator
+            : MessageElementFlag::BadgeBttvBot;
     for (const auto &element : message.elements)
     {
         if (element->getFlags().hasAny(MessageElementFlag::RepliedMessage,
@@ -268,6 +274,10 @@ QJsonObject normalizeMessage(const Channel &channel, const Message &message,
         }
         if (element->getFlags().has(MessageElementFlag::BadgeBadgeHQ) &&
             !getSettings()->showBadgesBadgeHQ)
+        {
+            continue;
+        }
+        if (element->getFlags().has(hiddenBotBadge))
         {
             continue;
         }

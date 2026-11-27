@@ -21,6 +21,8 @@ public:
 
     void broadcastMe(const QString &channelID, const QString &userID);
 
+    bool isInChannel(const QString &channelID) const;
+
 private:
     BttvLiveUpdates &manager;
 };

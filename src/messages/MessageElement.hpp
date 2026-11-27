@@ -101,6 +101,10 @@ enum class MessageElementFlag : int64_t {
     BadgeSevenTV = (1LL << 36),
 
     BadgeBttv = (1LL << 6),
+    /// BetterTTV's bot badge on a known bot's message
+    BadgeBttvBot = (1LL << 59),
+    /// A known bot's moderator badge, shown when its BetterTTV bot badge isn't
+    BadgeBttvBotModerator = (1LL << 60),
 
     BadgeFfz = (1LL << 19),
 
@@ -121,7 +125,8 @@ enum class MessageElementFlag : int64_t {
              BadgeSubscription | BadgeVanity | BadgeChatterino | BadgeSevenTV |
              BadgeFfz | BadgeFfzAp | BadgeSharedChannel | BadgeBttv |
              BadgeHomiesSupporter | BadgeHomiesCustom | BadgeMoltorino |
-             BadgeBluzyrino | BadgeJilChat | BadgeWydios | BadgeBadgeHQ,
+             BadgeBluzyrino | BadgeJilChat | BadgeWydios | BadgeBadgeHQ |
+             BadgeBttvBot | BadgeBttvBotModerator,
 
     ChannelName = (1LL << 20),
 
