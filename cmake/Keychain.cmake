@@ -22,6 +22,11 @@ function(_moltorino_fetch_keychain)
         ${keychain_options}
     )
     FetchContent_MakeAvailable(keychain)
+    # keychain builds with -Werror, and newer GCC (the Flatpak SDK) warns
+    # about its Error struct, so keep its warnings from failing our build
+    if(NOT MSVC)
+        target_compile_options(keychain PRIVATE -Wno-error)
+    endif()
     add_library(keychain::keychain ALIAS keychain)
 endfunction()
 

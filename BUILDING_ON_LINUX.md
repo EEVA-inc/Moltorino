@@ -81,6 +81,17 @@ flatpak install --user flathub org.kde.Platform//6.10 org.kde.Sdk//6.10
 
 The WSL scripts assume Qt is installed at `/home/<user>/Qt/6.10.2/gcc_64`. Set `QT_ROOT_DIR` before running the AppImage script if your Qt path differs.
 
+### Flatpak
+
+The Flatpak manifest is `.CI/com.moltobenne.moltorino.yml`. With `flatpak-builder` and the KDE 6.10 runtime and SDK from Flathub installed, build and install it from the project directory:
+
+```sh
+flatpak-builder --user --install --force-clean build-flatpak .CI/com.moltobenne.moltorino.yml
+flatpak run com.moltobenne.moltorino
+```
+
+The KDE runtime doesn't include WebKitGTK, so the Flatpak's TikTok login window uses QtWebEngine instead. To do the same in another build, configure with `-DMOLTORINO_TIKTOK_LOGIN_QTWEBENGINE=ON`.
+
 ## Manually
 
 1. In the project directory, create a build directory and enter it

@@ -301,7 +301,8 @@ private:
 }
 #endif
 
-#if defined(MOLTORINO_TIKTOK_WEBVIEW2) || defined(MOLTORINO_TIKTOK_WEBKIT)
+#if defined(MOLTORINO_TIKTOK_WEBVIEW2) || defined(MOLTORINO_TIKTOK_WEBKIT) || \
+    defined(MOLTORINO_TIKTOK_QTWEBENGINE)
 std::unique_ptr<TikTokLoginBrowser> createPlatformTikTokLoginBrowser(
     QObject *parent);
 #endif
@@ -310,7 +311,8 @@ bool TikTokLoginBrowser::available()
 {
 #if defined(MOLTORINO_TIKTOK_WEBKITGTK)
     return QFileInfo(gtkHelperPath()).isExecutable();
-#elif defined(MOLTORINO_TIKTOK_WEBVIEW2) || defined(MOLTORINO_TIKTOK_WEBKIT)
+#elif defined(MOLTORINO_TIKTOK_WEBVIEW2) || \
+    defined(MOLTORINO_TIKTOK_WEBKIT) || defined(MOLTORINO_TIKTOK_QTWEBENGINE)
     return true;
 #else
     return false;
@@ -321,7 +323,8 @@ std::unique_ptr<TikTokLoginBrowser> TikTokLoginBrowser::create(QObject *parent)
 {
 #if defined(MOLTORINO_TIKTOK_WEBKITGTK)
     return std::make_unique<GtkProcessBrowser>(parent);
-#elif defined(MOLTORINO_TIKTOK_WEBVIEW2) || defined(MOLTORINO_TIKTOK_WEBKIT)
+#elif defined(MOLTORINO_TIKTOK_WEBVIEW2) || \
+    defined(MOLTORINO_TIKTOK_WEBKIT) || defined(MOLTORINO_TIKTOK_QTWEBENGINE)
     return createPlatformTikTokLoginBrowser(parent);
 #else
     return {};

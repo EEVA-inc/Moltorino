@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 2019 Artem Polishchuk <ego.cordatus@gmail.com> -->
 <component type="desktop-application">
-    <id>com.moltobenne.moltorino.desktop</id>
+    <id>com.moltobenne.moltorino</id>
     <launchable type="desktop-id">com.moltobenne.moltorino.desktop</launchable>
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>MIT</project_license>
