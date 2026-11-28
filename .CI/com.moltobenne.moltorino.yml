@@ -1,0 +1,193 @@
+app-id: com.moltobenne.moltorino
+runtime: org.kde.Platform
+runtime-version: "6.10"
+sdk: org.kde.Sdk
+# QtWebEngine for the TikTok login window
+base: io.qt.qtwebengine.BaseApp
+base-version: "6.10"
+command: Moltorino7
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --share=network
+  - --socket=pulseaudio
+  - --device=dri
+  - --talk-name=org.freedesktop.Flatpak
+  # saved account logins (libsecret), notifications and the tray icon
+  - --talk-name=org.freedesktop.secrets
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --filesystem=xdg-data/chatterino:create
+  - --filesystem=~/.var/app/com.chatterino.chatterino/data/chatterino:ro
+build-options:
+  no-debuginfo: true
+cleanup-commands:
+  - /app/cleanup-BaseApp.sh
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - "*.a"
+  - /media-tools
+modules:
+  - name: boost
+    buildsystem: simple
+    build-commands:
+      - ./bootstrap.sh --prefix=/app --with-libraries=headers
+      - ./b2 -j $FLATPAK_BUILDER_N_JOBS install link=static variant=release cxxflags='-fPIE
+        -fstack-protector-strong -D_FORTIFY_SOURCE=2' --layout=system
+    sources:
+      - type: archive
+        url: https://archives.boost.io/release/1.89.0/source/boost_1_89_0.tar.gz
+        sha256: 9de758db755e8330a01d995b0a24d09798048400ac25c03fc5ea9be364b13c93
+    cleanup:
+      - /lib
+  - name: libsecret
+    buildsystem: meson
+    config-opts:
+      - -Dmanpage=false
+      - -Dvapi=false
+      - -Dgtk_doc=false
+    cleanup:
+      - /bin
+      - /include
+      - /lib/pkgconfig
+      - /share/gir-1.0
+      - /share/man
+    sources:
+      - type: archive
+        url: https://download.gnome.org/sources/libsecret/0.21/libsecret-0.21.4.tar.xz
+        sha256: 163d08d783be6d4ab9a979ceb5a4fecbc1d9660d3c34168c581301cd53912b20
+  - name: libnotify
+    buildsystem: meson
+    config-opts:
+      - -Dtests=false
+      - -Dintrospection=disabled
+      - -Dman=false
+      - -Dgtk_doc=false
+      - -Ddocbook_docs=disabled
+    cleanup:
+      - /bin
+      - /include
+      - /lib/pkgconfig
+    sources:
+      - type: archive
+        url: https://download.gnome.org/sources/libnotify/0.8/libnotify-0.8.6.tar.xz
+        sha256: c5540aaefb60e1d63b1c587c05f2284ebe72ece7d0c0e5e4a778cfd5844b6b58
+  - name: qtkeychain
+    buildsystem: cmake-ninja
+    sources:
+      - type: archive
+        url: https://github.com/frankosterfeld/qtkeychain/archive/refs/tags/0.15.0.tar.gz
+        sha256: f4254dc8f0933b06d90672d683eab08ef770acd8336e44dfa030ce041dc2ca22
+    config-opts:
+      - -DCMAKE_INSTALL_LIBDIR=/app/lib
+      - -DLIB_INSTALL_DIR=/app/lib
+      - -DBUILD_TRANSLATIONS=NO
+      - -DBUILD_WITH_QT6=ON
+  - name: hunspell
+    buildsystem: autotools
+    make-install-args:
+      - PREFIX=/app
+    sources:
+      - type: archive
+        url: https://github.com/hunspell/hunspell/archive/refs/tags/v1.7.2.tar.gz
+        sha256: 69fa312d3586c988789266eaf7ffc9861d9f6396c31fc930a014d551b59bbd6e
+      - type: shell
+        commands:
+          - autoreconf -vfi
+  # video support, built the same way as .CI/build-video-dependencies.sh;
+  # libvpx comes from the runtime
+  - name: libwebm
+    buildsystem: simple
+    build-commands:
+      - cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/app
+        -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF
+        -DENABLE_WEBM_PARSER=ON -DENABLE_WEBMTS=OFF -DENABLE_WEBMINFO=OFF
+        -DENABLE_SAMPLE_PROGRAMS=OFF -DENABLE_TESTS=OFF
+      - cmake --build build --target webm
+      - cmake --install build
+      - install -Dm644 -t /app/media-tools/licenses/webm LICENSE.TXT PATENTS.TXT
+    sources:
+      - type: archive
+        url: https://github.com/webmproject/libwebm/archive/refs/tags/libwebm-1.0.0.32.tar.gz
+        sha256: 7fd5e085bda9f8031cf2ad2a1e52d9b7b29cba9c0b96ad2ce794ce89e4249eb8
+  - name: libyuv
+    buildsystem: simple
+    build-commands:
+      - cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_DISABLE_FIND_PACKAGE_JPEG=ON
+        -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+      - cmake --build build --target yuv
+      - install -Dm644 build/libyuv.a /app/lib/libyuv.a
+      - cp -R include/. /app/include/
+      - install -Dm644 -t /app/media-tools/licenses/yuv LICENSE PATENTS
+    sources:
+      - type: archive
+        url: https://github.com/lemenkov/libyuv/archive/4cd90347e78ff76755df2107009e900374aee9cd.tar.gz
+        sha256: d401d9610c17aa2d5bb6ba279af478dd70d29ed52484a01d51469d255792c50a
+  - name: dav1d
+    buildsystem: meson
+    config-opts:
+      - --default-library=static
+      - -Denable_tools=false
+      - -Denable_tests=false
+    post-install:
+      - install -Dm644 -t /app/media-tools/licenses/dav1d ../COPYING
+    sources:
+      - type: archive
+        url: https://downloads.videolan.org/videolan/dav1d/1.5.3/dav1d-1.5.3.tar.xz
+        sha256: 732010aa5ef461fa93355ed2c6c5fedb48ddc4b74e697eaabe8907eaeb943011
+  # ffmpeg and ffprobe convert theme background videos; CMake installs them
+  # next to the app from /app/media-tools
+  - name: ffmpeg
+    buildsystem: simple
+    build-commands:
+      - ./configure --prefix=/app --disable-autodetect --disable-everything --disable-shared
+        --enable-static --disable-doc --disable-debug --disable-network --disable-avdevice
+        --disable-swresample --disable-postproc --enable-ffmpeg --enable-ffprobe
+        --enable-libvpx --enable-libdav1d --enable-zlib
+        --enable-decoder=h264,hevc,vp8,vp9,libdav1d,mpeg4,mjpeg,png,gif,webp
+        --enable-encoder=libvpx_vp8 --enable-demuxer=mov,matroska,avi,gif,image2,webp_anim
+        --enable-muxer=webm --enable-parser=h264,hevc,vp8,vp9,av1,mpeg4video,mjpeg,png,gif,webp
+        --enable-protocol=file,pipe --enable-filter=scale,fps,setpts,setsar,format,transpose,hflip,vflip
+        --pkg-config-flags=--static
+      - make -j $FLATPAK_BUILDER_N_JOBS ffmpeg ffprobe
+      - install -Dm755 -t /app/media-tools ffmpeg ffprobe
+      - install -Dm644 -t /app/media-tools/licenses/ffmpeg LICENSE.md COPYING.LGPLv2.1 ffmpeg-source.txt
+    sources:
+      - type: archive
+        url: https://ffmpeg.org/releases/ffmpeg-7.1.5.tar.xz
+        sha256: de668509caf9e35e3cd162473441fdb29538c6d96ed080292b3cf9e6fc5d558f
+      - type: file
+        path: ../resources/licenses/ffmpeg-source.txt
+  - name: moltorino
+    buildsystem: cmake
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DUSE_SYSTEM_QTKEYCHAIN=ON
+      - -DBUILD_WITH_QT6=ON
+      - -DCHATTERINO_UPDATER=OFF
+      - -DCHATTERINO_SPELLCHECK=On
+      - -DBUILD_TESTS=OFF
+      - -DBUILD_BENCHMARKS=OFF
+      - -DUSE_PRECOMPILED_HEADERS=OFF
+      - -DCHATTERINO_STATIC_QT_BUILD=OFF
+      - -DMOLTORINO_VELOPACK=OFF
+      # the KDE runtime has no WebKitGTK, so the TikTok login window uses
+      # QtWebEngine from the base app instead
+      - -DMOLTORINO_TIKTOK_LOGIN_QTWEBENGINE=ON
+      # flatpak-builder has no network access, so cmake/Keychain.cmake gets
+      # the keychain source downloaded below instead of fetching it
+      - -DFETCHCONTENT_SOURCE_DIR_KEYCHAIN=/run/build/moltorino/flatpak-deps/keychain
+      - -DMOLTORINO_MEDIA_TOOLS_DIR=/app/media-tools
+    sources:
+      - type: dir
+        path: ..
+      - type: archive
+        url: https://github.com/hrantzsch/keychain/archive/refs/tags/v1.3.0.tar.gz
+        sha256: 0e2eb3c6ca2c62253f7d28a478d0cb3eeb4b9656b33d2946e1a294361f72809c
+        dest: flatpak-deps/keychain
+    post-install:
+      - install -Dm644 ./resources/icon.png /app/share/icons/hicolor/256x256/apps/com.moltobenne.moltorino.png
+      - install -Dm644 ./resources/com.chatterino.chatterino.appdata.xml /app/share/metainfo/com.moltobenne.moltorino.metainfo.xml

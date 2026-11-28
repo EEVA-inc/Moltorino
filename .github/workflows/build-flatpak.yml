@@ -1,0 +1,31 @@
+---
+name: Build Flatpak
+
+on:
+  pull_request:
+    paths:
+      - ".CI/com.moltobenne.moltorino.yml"
+      - ".github/workflows/build-flatpak.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: build-flatpak-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flatpak:
+    name: "Build Flatpak (x86_64)"
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.10
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: Moltorino-x86_64.flatpak
+          manifest-path: .CI/com.moltobenne.moltorino.yml
+          cache-key: flatpak-builder-${{ hashFiles('.CI/com.moltobenne.moltorino.yml') }}

@@ -63,6 +63,8 @@ endif()
 
 option(MOLTORINO_YOUTUBE_ACCOUNTS "Enable YouTube accounts" ON)
 option(MOLTORINO_TIKTOK_ACCOUNTS "Enable TikTok accounts" ON)
+option(MOLTORINO_TIKTOK_LOGIN_BROWSER "Build the window used for TikTok login on Linux" ON)
+option(MOLTORINO_TIKTOK_LOGIN_QTWEBENGINE "Use QtWebEngine instead of WebKitGTK for the TikTok login window on Linux" OFF)
 option(MOLTORINO_YOUTUBE_DIRECT_READ "Enable direct YouTube chat reading" ON)
 set(MOLTORINO_YOUTUBE_OAUTH_CLIENT_ID "" CACHE STRING "YouTube OAuth client ID")
 set(MOLTORINO_YOUTUBE_OAUTH_CLIENT_SECRET "" CACHE STRING "YouTube OAuth client secret")

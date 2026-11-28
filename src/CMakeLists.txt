@@ -1279,7 +1279,16 @@ elseif(APPLE AND MOLTORINO_TIKTOK_ACCOUNTS)
         "-framework Cocoa"
         "-framework WebKit"
     )
-elseif(UNIX AND MOLTORINO_TIKTOK_ACCOUNTS)
+elseif(UNIX AND MOLTORINO_TIKTOK_ACCOUNTS AND MOLTORINO_TIKTOK_LOGIN_BROWSER
+       AND MOLTORINO_TIKTOK_LOGIN_QTWEBENGINE)
+    find_package(Qt${MAJOR_QT_VERSION} REQUIRED COMPONENTS WebEngineWidgets)
+    target_sources(moltorino-tiktok-login PRIVATE
+        widgets/dialogs/TikTokLoginBrowserQtWebEngine.cpp)
+    target_compile_definitions(moltorino-tiktok-login PRIVATE
+        MOLTORINO_TIKTOK_QTWEBENGINE=1)
+    target_link_libraries(moltorino-tiktok-login PRIVATE
+        Qt${MAJOR_QT_VERSION}::WebEngineWidgets)
+elseif(UNIX AND MOLTORINO_TIKTOK_ACCOUNTS AND MOLTORINO_TIKTOK_LOGIN_BROWSER)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(TIKTOK_WEBKIT REQUIRED IMPORTED_TARGET webkit2gtk-4.1>=2.42)
     pkg_check_modules(TIKTOK_JSON_GLIB REQUIRED IMPORTED_TARGET json-glib-1.0)
